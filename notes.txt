@@ -1,0 +1,11 @@
+
+top requirements
+====================
+- login
+- can send notifications by sms/text
+- allow inputing scheduled tasks
+- show list of scheduled tasks
+- send notification on the day of the task
+
+
+
