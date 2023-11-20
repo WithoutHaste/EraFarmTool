@@ -2,10 +2,30 @@
 top requirements
 ====================
 - login
-- can send notifications by sms/text
+  - if there are zero Admin users, first Admin must be setup via bash shell command running a PHP script (takes in username/password and runs same "add user" command as site calls
+  - Admins can use site to add new users, can set other users to be Admins
+  - backend does not allow dropping to zero Admins, but if that somehow happens then the first Admin can be added via shell command again, or a similar command can upgrade an existing User to Admin level
 - allow inputing scheduled tasks
 - show list of scheduled tasks
+- can send notifications by sms/text
 - send notification on the day of the task
 
+- keep a How To linked from the Readme updated, as if a new admin is setting up the system from scratch
+
+
+
+
+
+
+later requirements
+=====================
+- password recovery
+  - recovery is not supported, at least initially
+  - get someone with server access to do the reset via bash shell command running a PHP script
+
+
+is this wanted?
+======================
+- email integration
 
 

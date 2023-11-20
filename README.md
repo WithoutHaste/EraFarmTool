@@ -10,6 +10,8 @@ Management tool for small-scale farms/homesteads. To-do lists, scheduling, notif
 
 Developer has no interest in running cloud hosting for multiple users.  This is being designed to allow individual users to run their own private instances easily.
 
+System is expected to be used by very few users (<10) concurrently at any time. System is expected to manage only a small amount of data over an instance's life time (as compared to Big Data).
+
 # Architecture
 
 **2023 November**
