@@ -9,6 +9,7 @@ top requirements
 - show list of scheduled tasks
 - can send notifications by sms/text
 - send notification on the day of the task
+- neither email not sms integration is required to use the system
 
 - keep a How To linked from the Readme updated, as if a new admin is setting up the system from scratch
 
