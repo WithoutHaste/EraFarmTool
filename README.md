@@ -2,6 +2,8 @@
 
 Management tool for small-scale farms/homesteads. To-do lists, scheduling, notifications.
 
+[How To (Admins)](HOWTO_FOR_ADMINS.md)  
+
 # Design Goals
 
 - Runs on commonly available, low-end systems
@@ -22,4 +24,4 @@ PHP because it comes with Linux and doesn't require large frameworks to run. Thi
 
 File-system persistence because it is sufficient for initial testing. The project is expected to see real use from first user on a local server and be migrated to their personal server later - copy/paste of text files is easier to transfer than a database.
 
-
+Currently developing against `PHP 7.4.3`.
