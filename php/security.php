@@ -1,6 +1,6 @@
-<?php namespace EraFarmTool\Security;
+<?php
 
-function create_password_hash($password_raw) {
+function eft_create_password_hash($password_raw) {
 	/*
 	PHP password_hash and password_verify:
 	salting is added automatically by password_hash
@@ -11,7 +11,7 @@ function create_password_hash($password_raw) {
 	return password_hash($password_raw, PASSWORD_BCRYPT);
 }
 
-function verify_login($password_raw, $password_hashed) {
+function eft_verify_login($password_raw, $password_hashed) {
 	$verify_result = password_verify($password_raw, $password_hashed);
 	if($verify_result) 
 		return True;

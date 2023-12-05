@@ -11,8 +11,8 @@ function testPasswordsAreSalted() : void
 	//Arrange
 	$password_raw = "redyellowblue";
 	//Act
-	$hashed_a = EraFarmTool\Security\create_password_hash($password_raw);
-	$hashed_b = EraFarmTool\Security\create_password_hash($password_raw);
+	$hashed_a = eft_create_password_hash($password_raw);
+	$hashed_b = eft_create_password_hash($password_raw);
 	//Assert
 	if($hashed_a != $hashed_b) return;
 	echo "Failed: ".__FUNCTION__."\n";
@@ -22,9 +22,9 @@ function testHashedPasswordPassesValidation() : void
 {
 	//Arrange
 	$password_raw = "redyellowblue";
-	$password_hashed = EraFarmTool\Security\create_password_hash($password_raw);
+	$password_hashed = eft_create_password_hash($password_raw);
 	//Act
-	$verify_result = EraFarmTool\Security\verify_login($password_raw, $password_hashed);
+	$verify_result = eft_verify_login($password_raw, $password_hashed);
 	//Assert
 	if($verify_result) return;
 	echo "Failed: ".__FUNCTION__."\n";
