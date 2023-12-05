@@ -18,4 +18,8 @@ function eft_verify_login($password_raw, $password_hashed) {
 	return False;
 }
 
+//function eft_create_admin_user
+
+//function eft_create_regular_user
+
 ?>
