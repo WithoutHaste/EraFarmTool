@@ -1,13 +1,23 @@
 <?php
 
 include("constants.php");
+include("classes.php");
+
+const EFT_CLI_TAG_LONG_ISADMIN = "--admin";
+const EFT_CLI_TAG_SHORT_ADDUSER = "-a";
+const EFT_CLI_TAG_LONG_ADDUSER = "--add";
+const EFT_CLI_TAG_SHORT_USERNAME = "-u";
+const EFT_CLI_TAG_SHORT_PASSWORD = "-p";
+const EFT_CLI_TAG_SHORT_EMAIL = "-e";
+const EFT_CLI_TAG_SHORT_PHONENUMBER = "-ph";
 
 function eft_handle_command($arguments) {
 	//$arguments[0] will be "command_line.php"
 	
 	$arg_1 = eft_get_element($arguments, 1);
-	if($arg_1 == "-a" || $arg_1 == "--add") {
+	if($arg_1 == EFT_CLI_TAG_SHORT_ADDUSER || $arg_1 == EFT_CLI_TAG_LONG_ADDUSER) {
 		eft_handle_add_user(array_slice($arguments, 2));
+		//TODO handle exceptions
 		exit();
 	}
 	
@@ -25,21 +35,31 @@ Add a regular user:
 	*/
 }
 
+
 function eft_handle_add_user($arguments) {
-	$isAdmin = false;
-	if(eft_get_element($arguments, 0) == "--admin") {
-		$isAdmin = true;
+	$user = eft_parse_user_from_arguments($arguments);
+	
+	//TODO hash password and update data file
+}
+
+// Returns a User object or throws an exception
+function eft_parse_user_from_arguments($arguments) {
+	$user = new Eft_User();
+	if(eft_get_element($arguments, 0) == EFT_CLI_TAG_LONG_ISADMIN) {
+		$user->is_admin = true;
 		$arguments = array_slice($arguments, 1);
 	}
 	$argument_pairs = eft_get_argument_pairs($arguments);
-	$username = eft_get_element($argument_pairs, "-u");
-	$password = eft_get_element($argument_pairs, "-p");
-	$email = eft_get_element($argument_pairs, "-e");
-	$phone = eft_get_element($argument_pairs, "-ph");
+	$user->username = eft_get_element($argument_pairs, EFT_CLI_TAG_SHORT_USERNAME);
+	$user->password_raw = eft_get_element($argument_pairs, EFT_CLI_TAG_SHORT_PASSWORD);
+	$user->email = eft_get_element($argument_pairs, EFT_CLI_TAG_SHORT_EMAIL);
+	$user->phone_number = eft_get_element($argument_pairs, EFT_CLI_TAG_SHORT_PHONENUMBER);
 	
-	if($username == null || $password == null) {
+	if($user->username == null || $user->password_raw == null) {
 		throw new Exception(MESSAGE_ADD_USER_REQUIRED_ARGUMENTS);
 	}
+	
+	return $user;
 }
 
 // Returns key=>value pairs of named arguments

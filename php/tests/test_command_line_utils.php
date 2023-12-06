@@ -9,31 +9,89 @@ class TestCommandLineUtils extends TestCase
 {
 	////////////////////////////////////
 	
-	public function testHandleAddUser_MissingAllRequiredArguments_ThrowException() : void
+	public function testParseUserFromArguments_MissingAllRequiredArguments_ThrowException() : void
 	{
 		$this->expectExceptionMessage(MESSAGE_ADD_USER_REQUIRED_ARGUMENTS);
-		eft_handle_add_user([]);
+		eft_parse_user_from_arguments([]);
 	}	
 	
-	public function testHandleAddUser_MissingUsernameRequiredArgument_ThrowException() : void
+	public function testParseUserFromArguments_MissingUsernameRequiredArgument_ThrowException() : void
 	{
 		$this->expectExceptionMessage(MESSAGE_ADD_USER_REQUIRED_ARGUMENTS);
-		eft_handle_add_user(["-p", "password"]);
+		eft_parse_user_from_arguments([EFT_CLI_TAG_SHORT_PASSWORD, "password"]);
 	}	
 	
-	public function testHandleAddUser_MissingPasswordRequiredArgument_ThrowException() : void
+	public function testParseUserFromArguments_MissingPasswordRequiredArgument_ThrowException() : void
 	{
 		$this->expectExceptionMessage(MESSAGE_ADD_USER_REQUIRED_ARGUMENTS);
-		eft_handle_add_user(["-u", "username"]);
+		eft_parse_user_from_arguments([EFT_CLI_TAG_SHORT_USERNAME, "username"]);
 	}	
 	
-	public function testHandleAddUser_HasAllRequiredArguments() : void
+	public function testParseUserFromArguments_HasAllRequiredArguments() : void
 	{
-		eft_handle_add_user(["-u", "username", "-p", "password"]);
-		// no exception is thrown
-		self::assertTrue(true);
-		
-		//todo expand this as functionality is filled in
+		//Arrange
+		$username = "jack";
+		$password = "pumpkin";
+		//Act
+		$user_a = eft_parse_user_from_arguments([EFT_CLI_TAG_SHORT_USERNAME, $username, EFT_CLI_TAG_SHORT_PASSWORD, $password]);
+		$user_b = eft_parse_user_from_arguments([EFT_CLI_TAG_SHORT_PASSWORD, $password, EFT_CLI_TAG_SHORT_USERNAME, $username]); //different order
+		//Assert
+		self::assertSame($username, $user_a->username);
+		self::assertSame($password, $user_a->password_raw);
+		self::assertNull($user_a->email);
+		self::assertNull($user_a->phone_number);
+
+		self::assertSame($username, $user_b->username);
+		self::assertSame($password, $user_b->password_raw);
+		self::assertNull($user_b->email);
+		self::assertNull($user_b->phone_number);
+	}	
+	
+	public function testParseUserFromArguments_HasAllArguments() : void
+	{
+		//Arrange
+		$username = "jack";
+		$password = "pumpkin";
+		$email = "j@gmail.com";
+		$phone = "1234567890";
+		//Act
+		$user = eft_parse_user_from_arguments([EFT_CLI_TAG_SHORT_USERNAME, $username, EFT_CLI_TAG_SHORT_PASSWORD, $password, EFT_CLI_TAG_SHORT_EMAIL, $email, EFT_CLI_TAG_SHORT_PHONENUMBER, $phone]);
+		//Assert
+		self::assertSame($username, $user->username);
+		self::assertSame($password, $user->password_raw);
+		self::assertSame($email, $user->email);
+		self::assertSame($phone, $user->phone_number);
+	}	
+	
+	public function testParseUserFromArguments_IsAdminFalse() : void
+	{
+		//Arrange
+		$username = "jack";
+		$password = "pumpkin";
+		//Act
+		$user_a = eft_parse_user_from_arguments([EFT_CLI_TAG_SHORT_USERNAME, $username, EFT_CLI_TAG_SHORT_PASSWORD, $password]); //flag not set
+		$user_b = eft_parse_user_from_arguments([EFT_CLI_TAG_SHORT_USERNAME, $username, EFT_CLI_TAG_LONG_ISADMIN, EFT_CLI_TAG_SHORT_PASSWORD, $password]); //flag set in wrong position
+		//Assert
+		self::assertFalse($user_a->is_admin);
+		self::assertSame($username, $user_a->username);
+		self::assertSame($password, $user_a->password_raw);
+
+		self::assertFalse($user_b->is_admin);
+		self::assertSame($username, $user_b->username);
+		self::assertSame($password, $user_b->password_raw);
+	}	
+	
+	public function testParseUserFromArguments_IsAdminTrue() : void
+	{
+		//Arrange
+		$username = "jack";
+		$password = "pumpkin";
+		//Act
+		$user = eft_parse_user_from_arguments([EFT_CLI_TAG_LONG_ISADMIN, EFT_CLI_TAG_SHORT_USERNAME, $username, EFT_CLI_TAG_SHORT_PASSWORD, $password]);
+		//Assert
+		self::assertTrue($user->is_admin);
+		self::assertSame($username, $user->username);
+		self::assertSame($password, $user->password_raw);
 	}	
 	
 	////////////////////////////////////
