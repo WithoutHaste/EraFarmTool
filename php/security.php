@@ -1,6 +1,8 @@
 <?php
 
-function eft_create_password_hash($password_raw) {
+include_once("classes.php");
+
+function eft_create_password_hash(string $password_raw) : string {
 	/*
 	PHP password_hash and password_verify:
 	salting is added automatically by password_hash
@@ -11,19 +13,16 @@ function eft_create_password_hash($password_raw) {
 	return password_hash($password_raw, PASSWORD_BCRYPT);
 }
 
-function eft_verify_login($password_raw, $password_hashed) {
+function eft_verify_login(string $password_raw, string $password_hashed) : bool {
 	$verify_result = password_verify($password_raw, $password_hashed);
 	if($verify_result) 
 		return True;
 	return False;
 }
 
-/*
 // Assumes permissions to add a user have already been verified
-// $user is a User object
-function eft_persist_new_user(User $user) {
+// Returns id of the user
+function eft_persist_new_user(Eft_User $user) : int {
 }
 
-//function eft_store_user
-*/
 ?>

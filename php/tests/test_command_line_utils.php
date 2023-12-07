@@ -1,6 +1,5 @@
 <?php
 
-//include("../constants.php");
 include("../command_line_utils.php");
 
 use PHPUnit\Framework\TestCase;

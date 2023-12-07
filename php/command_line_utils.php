@@ -1,8 +1,8 @@
 <?php
 
-include("constants.php");
-include("classes.php");
-include("security.php");
+include_once("constants.php");
+include_once("classes.php");
+include_once("security.php");
 
 const EFT_CLI_TAG_LONG_ISADMIN = "--admin";
 const EFT_CLI_TAG_SHORT_ADDUSER = "-a";
@@ -12,39 +12,28 @@ const EFT_CLI_TAG_SHORT_PASSWORD = "-p";
 const EFT_CLI_TAG_SHORT_EMAIL = "-e";
 const EFT_CLI_TAG_SHORT_PHONENUMBER = "-ph";
 
-function eft_handle_command($arguments) {
+// Returns a message describing what was done
+function eft_handle_command(array $arguments) : string {
 	//$arguments[0] will be "command_line.php"
 	
 	$arg_1 = eft_get_element($arguments, 1);
 	if($arg_1 == EFT_CLI_TAG_SHORT_ADDUSER || $arg_1 == EFT_CLI_TAG_LONG_ADDUSER) {
 		eft_handle_add_user(array_slice($arguments, 2));
 		//TODO handle exceptions
-		exit();
+		return "user added with id TODO";
 	}
 	
-	echo "no action taken\n";
-	
-	/*
-Add an admin user:    
-`php command_line.php -a --admin -u username -p password [-e email] [-ph phonenumber]`  
-`php command_line.php --add --admin -u username -p password [-e email] [-ph phonenumber]`  
-
-Add a regular user:  
-`php command_line.php -a -u username -p password [-e email] [-ph phonenumber]`  
-`php command_line.php --add -u username -p password [-e email] [-ph phonenumber]`  
-	
-	*/
+	return "no action taken";
 }
 
-
-function eft_handle_add_user($arguments) {
+// Returns the id of the user
+function eft_handle_add_user(array $arguments) : int {
 	$user = eft_parse_user_from_arguments($arguments);
 	
 	//TODO hash password and update data file
 }
 
-// Returns a User object or throws an exception
-function eft_parse_user_from_arguments($arguments) {
+function eft_parse_user_from_arguments(array $arguments) : Eft_User {
 	$user = new Eft_User();
 	if(eft_get_element($arguments, 0) == EFT_CLI_TAG_LONG_ISADMIN) {
 		$user->is_admin = true;
@@ -68,7 +57,7 @@ function eft_parse_user_from_arguments($arguments) {
 // Returns key=>value pairs of named arguments
 // dash-arguments without a following string are ignored
 // Ex: ["-u", "username"] returns ["-u"=>"username"]
-function eft_get_argument_pairs($arguments) {
+function eft_get_argument_pairs(array $arguments) : array {
 	$pairs = array();
 	$i = 0;
 	while($i < count($arguments)) {
@@ -85,8 +74,7 @@ function eft_get_argument_pairs($arguments) {
 }
 
 // Returns true if string is formatted as "-xxx"
-// Expects $argument is a string
-function eft_is_dash_argument($argument) {
+function eft_is_dash_argument(?string $argument) : bool {
 	return (strlen($argument) > 1 && $argument[0] == "-");
 }
 
