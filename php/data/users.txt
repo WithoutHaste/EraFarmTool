@@ -1,1 +1,1 @@
-Id|CreatedDate|IsAdmin|Username|PasswordHash|Email|PhoneNumber
+Id|CreatedDate|IsAdmin|Username|PasswordHashed|Email|PhoneNumber|IsDeactivated

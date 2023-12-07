@@ -2,6 +2,7 @@
 
 include("constants.php");
 include("classes.php");
+include("security.php");
 
 const EFT_CLI_TAG_LONG_ISADMIN = "--admin";
 const EFT_CLI_TAG_SHORT_ADDUSER = "-a";
@@ -51,13 +52,15 @@ function eft_parse_user_from_arguments($arguments) {
 	}
 	$argument_pairs = eft_get_argument_pairs($arguments);
 	$user->username = eft_get_element($argument_pairs, EFT_CLI_TAG_SHORT_USERNAME);
-	$user->password_raw = eft_get_element($argument_pairs, EFT_CLI_TAG_SHORT_PASSWORD);
+	$password_raw = eft_get_element($argument_pairs, EFT_CLI_TAG_SHORT_PASSWORD);
 	$user->email = eft_get_element($argument_pairs, EFT_CLI_TAG_SHORT_EMAIL);
 	$user->phone_number = eft_get_element($argument_pairs, EFT_CLI_TAG_SHORT_PHONENUMBER);
 	
-	if($user->username == null || $user->password_raw == null) {
+	if($user->username == null || $password_raw == null) {
 		throw new Exception(MESSAGE_ADD_USER_REQUIRED_ARGUMENTS);
 	}
+	
+	$user->password_hashed = eft_create_password_hash($password_raw);
 	
 	return $user;
 }

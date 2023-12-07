@@ -18,8 +18,12 @@ function eft_verify_login($password_raw, $password_hashed) {
 	return False;
 }
 
-//function eft_create_admin_user
+/*
+// Assumes permissions to add a user have already been verified
+// $user is a User object
+function eft_persist_new_user(User $user) {
+}
 
-//function eft_create_regular_user
-
+//function eft_store_user
+*/
 ?>

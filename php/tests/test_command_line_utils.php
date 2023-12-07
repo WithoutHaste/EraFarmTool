@@ -37,12 +37,12 @@ class TestCommandLineUtils extends TestCase
 		$user_b = eft_parse_user_from_arguments([EFT_CLI_TAG_SHORT_PASSWORD, $password, EFT_CLI_TAG_SHORT_USERNAME, $username]); //different order
 		//Assert
 		self::assertSame($username, $user_a->username);
-		self::assertSame($password, $user_a->password_raw);
+		self::assertTrue(eft_verify_login($password, $user_a->password_hashed));
 		self::assertNull($user_a->email);
 		self::assertNull($user_a->phone_number);
 
 		self::assertSame($username, $user_b->username);
-		self::assertSame($password, $user_b->password_raw);
+		self::assertTrue(eft_verify_login($password, $user_b->password_hashed));
 		self::assertNull($user_b->email);
 		self::assertNull($user_b->phone_number);
 	}	
@@ -58,7 +58,7 @@ class TestCommandLineUtils extends TestCase
 		$user = eft_parse_user_from_arguments([EFT_CLI_TAG_SHORT_USERNAME, $username, EFT_CLI_TAG_SHORT_PASSWORD, $password, EFT_CLI_TAG_SHORT_EMAIL, $email, EFT_CLI_TAG_SHORT_PHONENUMBER, $phone]);
 		//Assert
 		self::assertSame($username, $user->username);
-		self::assertSame($password, $user->password_raw);
+		self::assertTrue(eft_verify_login($password, $user->password_hashed));
 		self::assertSame($email, $user->email);
 		self::assertSame($phone, $user->phone_number);
 	}	
@@ -73,12 +73,7 @@ class TestCommandLineUtils extends TestCase
 		$user_b = eft_parse_user_from_arguments([EFT_CLI_TAG_SHORT_USERNAME, $username, EFT_CLI_TAG_LONG_ISADMIN, EFT_CLI_TAG_SHORT_PASSWORD, $password]); //flag set in wrong position
 		//Assert
 		self::assertFalse($user_a->is_admin);
-		self::assertSame($username, $user_a->username);
-		self::assertSame($password, $user_a->password_raw);
-
 		self::assertFalse($user_b->is_admin);
-		self::assertSame($username, $user_b->username);
-		self::assertSame($password, $user_b->password_raw);
 	}	
 	
 	public function testParseUserFromArguments_IsAdminTrue() : void
@@ -90,8 +85,6 @@ class TestCommandLineUtils extends TestCase
 		$user = eft_parse_user_from_arguments([EFT_CLI_TAG_LONG_ISADMIN, EFT_CLI_TAG_SHORT_USERNAME, $username, EFT_CLI_TAG_SHORT_PASSWORD, $password]);
 		//Assert
 		self::assertTrue($user->is_admin);
-		self::assertSame($username, $user->username);
-		self::assertSame($password, $user->password_raw);
 	}	
 	
 	////////////////////////////////////
