@@ -24,10 +24,18 @@ Add a regular user:
 EFT stores all data to the file system rather than to a database. All files are in the `[home]/data` folder.
 
 Format of files in `data` folder:
-- first line is the headers
+- there may be comment lines before the header row (starting with "#" character)
+  - specifies version number for file format
+- after the comments, the next line is the headers
 - files are pipe (|) delimited
 - date format is YYYYMMDD
 - booleans are `0` or `1`
+
+Data files with Ids will increment to the integer that is not currently in use.
+
+Versions of each data file:
+- **users.txt** version 1.0
+	- Id|CreatedDate|IsAdmin|Username|PasswordHashed|Email|PhoneNumber|LastLoginDate|IsDeactivated
 
 ## Run unit tests
 

@@ -24,4 +24,6 @@ PHP because it comes with Linux and doesn't require large frameworks to run. Thi
 
 File-system persistence because it is sufficient for initial testing. The project is expected to see real use from first user on a local server and be migrated to their personal server later - copy/paste of text files is easier to transfer than a database.
 
+Data files will be locked during editing. With the low number of users this app is built for, there shouldn't be timeout issues.
+
 Currently developing against `PHP 7.4.3`.

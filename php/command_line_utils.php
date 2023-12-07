@@ -29,8 +29,8 @@ function eft_handle_command(array $arguments) : string {
 // Returns the id of the user
 function eft_handle_add_user(array $arguments) : int {
 	$user = eft_parse_user_from_arguments($arguments);
-	
-	//TODO hash password and update data file
+	$id = eft_persist_new_user($user);
+	return $id;
 }
 
 function eft_parse_user_from_arguments(array $arguments) : Eft_User {
