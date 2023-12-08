@@ -31,10 +31,11 @@ function eft_persist_new_user(Eft_User $user) : int {
 // returns id of the user
 function eft_persist_new_user_callback($file_pointer) : int {
 	$format_version = eft_get_data_format_version($file_pointer);
-	if($format_version != "1.0") {
-		throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
+	$users = array();
+	switch($format_version) {
+		case "1.0": $users = eft_deserialize_users_format_1_0($file_pointer); break;
+		default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
 	}
-	$users = eft_deserialize_users_format_1_0($file_pointer);
 	//if username is already used throw exception
 	//if email is not null and is already used throw exception
 	//determine next id number
