@@ -4,36 +4,65 @@ include("../data_access.php");
 
 use PHPUnit\Framework\TestCase;
 
+/* demonstration of how to use a wrapper class to enable mock testing
+* not going forward with this because it can't test all the edge cases
+
+class Eft_File_Pointer {
+	private $file_pointer; //what you get when you fopen a file
+	
+	public function __construct($file_pointer) {
+		$this->file_pointer = $file_pointer;
+	}
+	
+	public function go_to_start() {
+		rewind($this->file_pointer);
+	}
+	
+	public function get_line() {
+		return fgets($this->file_pointer);
+	}
+}
+
+function eft_get_data_format_version(Eft_File_Pointer $file_pointer) : ?string {
+	$file_pointer->go_to_start();
+	$line = $file_pointer->get_line();
+	if(!$line) {
+		return null;
+	}
+
+	$line = trim($line, "\n\r ");
+	$matches = "";
+	preg_match_all('/\#version\:(.*)/i', $line, $matches);
+	if(count($matches) < 2 || count($matches[1]) < 1 || !$matches[1][0]) {
+		return null;
+	}
+
+	return $matches[1][0];
+}
+
 class TestDataAccess extends TestCase
 {
-	/*
-	public function testGetDataVersion_tryingToMock() : void
+	public function testGetDataFormatVersion_FindsIt() : void
 	{
-		//asking stack overflow for help
-		//https://stackoverflow.com/questions/77622724/phpunit-cannot-stub-or-mock-class-or-interface-resource-which-does-not-exist
-		
-		$file_pointer = fopen("../data/users.txt", "r"); //verifies PHPUnit can use "resource" type
-		self::assertTrue(is_resource($file_pointer)); //verifies PHPUnit can use "resource" type
-		
-		// all of these die on error: Cannot stub or mock class or interface "resource" which does not exist
-		//$resourceMock = $this->createStub(gettype($file_pointer));
-		$resourceMock = $this->createStub(resource::class);
-		//$resourceMock = $this->createMock(resource::class);
-		//$resourceMock = $this->getMock('resource', array('getLine')); //error: call to undefined method getMock
-
+		//Arrange
 		$data_format = "1.0";
-        $resourceMock
-            ->method('getLine')
+		$resource_mock = $this->createMock(Eft_File_Pointer::class);
+        $resource_mock
+            ->method('go_to_start')
+            ->willReturn(null);
+        $resource_mock
+            ->method('get_line')
             ->will($this->onConsecutiveCalls("#version:".$data_format, false));
-		$result = get_data_format($resourceMock);
+		//Act
+		$result = eft_get_data_format_version($resource_mock);
+		//Assert
 		self::assertSame($data_format, $result);
-		
-		fclose($file_pointer);
 	}
-	*/
-	
-	//until I figure out the mocking, going forward with real files
+}
+*/
 
+class TestDataAccess extends TestCase
+{
 	public function testGetDataFormatVersion_FindsIt() : void
 	{
 		//Arrange
@@ -97,28 +126,5 @@ class TestDataAccess extends TestCase
 	
 	
 }
-/*
-class TestDataAccess extends TestCase
-{
-	public function testGetDataFormatVersion_dummy() : void
-	{
-		
-		$file_pointer = fopen("../data/users.txt", "r");
-		self::assertTrue(is_resource($file_pointer)); //verifies PHPUnit can use the resource type
-		
-		//Arrange
-		$resourceMock = $this->createStub(gettype($file_pointer)); //$this->createStub(resource::class); //$this->createMock(resource::class);
-		// dies on error: Cannot stub or mock class or interface "resource" which does not exist
-        $resourceMock
-            ->method('getLine')
-            ->will($this->onConsecutiveCalls('abc', false));
-		//Act
-		$result = eft_get_data_format_version($resourceMock);
-		//Assert
-		self::assertSame("abc", $result);
 
-		fclose($file_pointer);
-	}
-}
-*/
 ?>
