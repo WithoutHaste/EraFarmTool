@@ -1,6 +1,7 @@
 <?php
 
 include_once("constants.php");
+include_once("global_utils.php");
 include_once("classes.php");
 include_once("security.php");
 
@@ -76,16 +77,6 @@ function eft_get_argument_pairs(array $arguments) : array {
 // Returns true if string is formatted as "-xxx"
 function eft_is_dash_argument(?string $argument) : bool {
 	return (strlen($argument) > 1 && $argument[0] == "-");
-}
-
-// Safe-get element from array, for arrays and associative arrays
-// Returns null if the $index does not exist
-// Expects $array is an array
-function eft_get_element($array, $index) {
-	if(array_key_exists($index, $array)) {
-		return $array[$index];
-	}
-	return null;
 }
 
 ?>
