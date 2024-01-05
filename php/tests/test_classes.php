@@ -88,7 +88,7 @@ class TestClasses extends TestCase
 		$result = Eft_User::deserialize($line, $format);
 	}
 	
-	public function testUser_Deserialize_1_0_InvalidFormat_ReturnsNull() : void
+	public function testUser_Deserialize_1_0_InvalidFormat_ReturnsDefaultValues() : void
 	{
 		//Arrange
 		$line = "abc|def";
@@ -96,7 +96,16 @@ class TestClasses extends TestCase
 		//Act
 		$result = Eft_User::deserialize($line, $format);
 		//Assert
-		self::assertNull($result);
+		self::assertNotNull($result);
+		self::assertSame(0, $result->id);
+		self::assertSame(null, $result->created_date);
+		self::assertSame(false, $result->is_admin);
+		self::assertSame(null, $result->username);
+		self::assertSame(null, $result->password_hashed);
+		self::assertSame(null, $result->email);
+		self::assertSame(null, $result->phone_number);
+		self::assertSame(null, $result->last_login_date);
+		self::assertSame(false, $result->is_deactivated);
 	}
 	
 	public function testUser_Deserialize_1_0_AllFieldsFound() : void

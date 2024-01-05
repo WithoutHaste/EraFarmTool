@@ -56,24 +56,30 @@ class Eft_User {
 		if(is_null($line)) {
 			return null;
 		}
-		$matches = "";
-		//Id|CreatedDate|IsAdmin|Username|PasswordHashed|Email|PhoneNumber|LastLoginDate|IsDeactivated
-		$found_match = preg_match('/(\d*)\|(\d*)\|([01])\|(\w*)\|(.*)\|(.*)\|(\d*)\|(\d*)\|([01])/i', $line, $matches);
-		if(!$found_match) {
+		$columns = explode('|', $line);
+		$user = new Eft_User();
+		$user->id = intval(eft_get_element($columns, 0));
+		$user->created_date = Eft_User::deserialize_date(eft_get_element($columns, 1));
+		$user->is_admin = Eft_User::deserialize_bool(eft_get_element($columns, 2));
+		$user->username = eft_get_element($columns, 3);
+		$user->password_hashed = eft_get_element($columns, 4);
+		$user->email = eft_get_element($columns, 5);
+		$user->phone_number = eft_get_element($columns, 6);
+		$user->last_login_date = Eft_User::deserialize_date(eft_get_element($columns, 7));
+		$user->is_deactivated = Eft_User::deserialize_bool(eft_get_element($columns, 8));
+		return $user;
+	}
+	
+	private static function deserialize_bool(?string $text) : bool {
+		return ($text == "1");
+	}
+	
+	private static function deserialize_date(?string $text) : ?DateTime {
+		$result = DateTime::createFromFormat('Ymd', $text);
+		if($result == false) {
 			return null;
 		}
-		$user = new Eft_User();
-		$user->id = intval(eft_get_element($matches, 1));
-		$user->created_date = DateTime::createFromFormat('Ymd', eft_get_element($matches, 2));
-		$user->is_admin = (eft_get_element($matches, 3) == '1');
-		$user->username = eft_get_element($matches, 4);
-		$user->password_hashed = eft_get_element($matches, 5);
-		$user->email = eft_get_element($matches, 6);
-		$user->phone_number = eft_get_element($matches, 7);
-		$user->last_login_date = DateTime::createFromFormat('Ymd', eft_get_element($matches, 8));
-		$user->is_deactivated = (eft_get_element($matches, 9) == '1');
-		
-		return $user;
+		return $result;
 	}
 }
 
