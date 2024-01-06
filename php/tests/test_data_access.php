@@ -226,7 +226,9 @@ class TestDataAccess extends TestCase
 		fclose($file_pointer);
 		$file_pointer = fopen($file_name, "r+");
 		$new_user->id = 2;
+		$new_user->created_date = new DateTime();
 		$users = eft_deserialize_users_format_1_0($file_pointer);
+		self::assertSame($new_user->id, $result);
 		self::assertSame(2, count($users));
 		self::assertTrue(users_match($new_user, $users[1]));
 		//Cleanup
@@ -250,7 +252,9 @@ class TestDataAccess extends TestCase
 		fclose($file_pointer);
 		$file_pointer = fopen($file_name, "r+");
 		$new_user->id = 1;
+		$new_user->created_date = new DateTime();
 		$users = eft_deserialize_users_format_1_0($file_pointer);
+		self::assertSame($new_user->id, $result);
 		self::assertSame(1, count($users));
 		self::assertTrue(users_match($new_user, $users[0]));
 		//Cleanup
@@ -277,7 +281,9 @@ class TestDataAccess extends TestCase
 		fclose($file_pointer);
 		$file_pointer = fopen($file_name, "r+");
 		$new_user->id = 2;
+		$new_user->created_date = new DateTime();
 		$users = eft_deserialize_users_format_1_0($file_pointer);
+		self::assertSame($new_user->id, $result);
 		self::assertSame(2, count($users));
 		self::assertTrue(users_match($new_user, $users[1]));
 		//Cleanup

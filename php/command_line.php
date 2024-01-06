@@ -12,6 +12,7 @@ if(php_sapi_name() != "cli") {
 
 include("command_line_utils.php");
 
-eft_handle_command($argv);
+$message = eft_handle_command($argv);
+echo $message."\n";
 
 ?>

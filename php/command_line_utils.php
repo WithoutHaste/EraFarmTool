@@ -4,6 +4,7 @@ include_once("constants.php");
 include_once("global_utils.php");
 include_once("classes.php");
 include_once("security.php");
+include_once("data_access.php");
 
 const EFT_CLI_TAG_LONG_ISADMIN = "--admin";
 const EFT_CLI_TAG_SHORT_ADDUSER = "-a";
@@ -16,12 +17,17 @@ const EFT_CLI_TAG_SHORT_PHONENUMBER = "-ph";
 // Returns a message describing what was done
 function eft_handle_command(array $arguments) : string {
 	//$arguments[0] will be "command_line.php"
-	
-	$arg_1 = eft_get_element($arguments, 1);
-	if($arg_1 == EFT_CLI_TAG_SHORT_ADDUSER || $arg_1 == EFT_CLI_TAG_LONG_ADDUSER) {
-		eft_handle_add_user(array_slice($arguments, 2));
-		//TODO handle exceptions
-		return "user added with id TODO";
+	try 
+	{	
+		$arg_1 = eft_get_element($arguments, 1);
+		if($arg_1 == EFT_CLI_TAG_SHORT_ADDUSER || $arg_1 == EFT_CLI_TAG_LONG_ADDUSER) {
+			$user_id = eft_handle_add_user(array_slice($arguments, 2));
+			return "user added with id: ".$user_id;
+		}
+	}
+	catch(Exception $exception)
+	{
+		return "ERROR: ".$exception->getMessage();
 	}
 	
 	return "no action taken";

@@ -85,7 +85,7 @@ function eft_get_data_lines($file_pointer) {
 // Assumes permissions to add a user have already been verified
 // Returns id of the user
 function eft_persist_new_user(Eft_User $user) : int {
-	return eft_use_file_lock(DATA_FILE_USERS, eft_persist_new_user_callback, $user);
+	return eft_use_file_lock(DATA_FILE_USERS, 'eft_persist_new_user_callback', $user);
 }
 
 // intended to be passed as a callback to a data_access.php function
@@ -110,6 +110,7 @@ function eft_persist_new_user_callback($file_pointer, $new_user) : int {
 		}
 	}
 	$new_user->id = $max_id + 1;
+	$new_user->created_date = new DateTime();
 	$new_user_serialized = $new_user->serialize($format_version);
 	fseek($file_pointer, 0, SEEK_END); //go to end of file
 	fwrite($file_pointer, "\n".$new_user_serialized);
