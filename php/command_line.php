@@ -6,7 +6,7 @@ There are other ways to ensure this that require changes to file locations or fi
 This solution was selected in the interest of keeping this project really easy to setup on a new server.
 */
 if(php_sapi_name() != "cli") {
-	include('404_not_found.php');
+	include('page_404_not_found.php');
 	die();
 }
 
