@@ -47,6 +47,36 @@ class TestGlobalUtils extends TestCase
 		//Assert
 		self::assertSame($result, $array[$index]);
 	}
+
+	////////////////////////////////////
+	
+	public function testStrContains() : void
+	{
+		//Arrange Null String
+		$str = null;
+		$substr = "abc";
+		//Act
+		$result = str_contains($str, $substr);
+		//Assert
+		self::assertFalse($result);
+
+		//Arrange Substring Not Found
+		$str = "abbbbb";
+		$substr = "abc";
+		//Act
+		$result = str_contains($str, $substr);
+		//Assert
+		self::assertFalse($result);
+
+		//Arrange Substring Found
+		$str = "xxxabcxxx";
+		$substr = "abc";
+		//Act
+		$result = str_contains($str, $substr);
+		//Assert
+		self::assertTrue($result);
+	}
+
 }
 
 ?>
