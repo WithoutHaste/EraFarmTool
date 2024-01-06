@@ -1,0 +1,4 @@
+#version:1.0
+Id|Created Date|Is Admin|Username|Password Hashed|Email|Phone Number|Last Login Date|Is Deactivated
+1|20230131|0|jack|abcde|j@gmail.com|1234567890|20230315|0
+3|20230215|1|jill|fghij|j@yahoo.com|0987654321|20230216|0

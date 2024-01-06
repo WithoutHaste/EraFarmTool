@@ -4,14 +4,15 @@ include_once("constants.php");
 
 // $callback is expecting a function name that accepts a $file_pointer argument and operates on it
 // returns whatever the $callback returns
-function eft_use_file_lock(string $file_name, $callback) {
+// $callback_arguments is passed into the $callback
+function eft_use_file_lock(string $file_name, $callback, $callback_arguments) {
 	if(!file_exists($file_name)) {
 		throw new Exception(MESSAGE_FILE_NOT_FOUND);
 	}
 	
 	$file_pointer = fopen($file_name, "r+");
 	if (flock($file_pointer, LOCK_EX)) {  // acquire an exclusive lock
-		$result = $callback($file_pointer);
+		$result = $callback($file_pointer, $callback_arguments);
 		fflush($file_pointer);            // flush output before releasing the lock
 		flock($file_pointer, LOCK_UN);    // release the lock
 		fclose($file_pointer);
@@ -51,6 +52,10 @@ function eft_deserialize_users_format_1_0($file_pointer) : array {
 	$lines = eft_get_data_lines($file_pointer);
 	$users = array();
 	foreach($lines as $line) {
+		$user = Eft_User::deserialize($line, FORMAT_1_0);
+		if($user != null) {
+			array_push($users, $user);
+		}
 	}
 	return $users;
 }
@@ -80,24 +85,35 @@ function eft_get_data_lines($file_pointer) {
 // Assumes permissions to add a user have already been verified
 // Returns id of the user
 function eft_persist_new_user(Eft_User $user) : int {
-	return eft_use_file_lock(DATA_FILE_USERS, eft_persist_new_user_callback);
+	return eft_use_file_lock(DATA_FILE_USERS, eft_persist_new_user_callback, $user);
 }
 
 // intended to be passed as a callback to a data_access.php function
 // returns id of the user
-function eft_persist_new_user_callback($file_pointer) : int {
+function eft_persist_new_user_callback($file_pointer, $new_user) : int {
 	$format_version = eft_get_data_format_version($file_pointer);
 	$users = array();
 	switch($format_version) {
 		case FORMAT_1_0: $users = eft_deserialize_users_format_1_0($file_pointer); break;
 		default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
 	}
-	//TODO
-	//if username is already used throw exception
-	//if email is not null and is already used throw exception
-	//determine next id number
-	//append new user with next id
-	//return id
+	$max_id = 0;
+	foreach($users as $user) {
+		if($user->username == $new_user->username) {
+			throw new Exception(MESSAGE_USERNAME_COLLISION);
+		}
+		if($new_user->email != null && $user->email == $new_user->email) {
+			throw new Exception(MESSAGE_EMAIL_COLLISION);
+		}
+		if($user->id > $max_id) {
+			$max_id = $user->id;
+		}
+	}
+	$new_user->id = $max_id + 1;
+	$new_user_serialized = $new_user->serialize($format_version);
+	fseek($file_pointer, 0, SEEK_END); //go to end of file
+	fwrite($file_pointer, "\n".$new_user_serialized);
+	return $new_user->id;
 }
 
 ?>

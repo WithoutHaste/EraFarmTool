@@ -2,6 +2,7 @@
 
 include_once("../constants.php");
 include_once("../classes.php");
+include_once("builders.php");
 
 use PHPUnit\Framework\TestCase;
 
@@ -41,7 +42,7 @@ class TestClasses extends TestCase
 	public function testUser_Serialize_1_0_Dates() : void
 	{
 		//Arrange
-		$user = $this->build_user();
+		$user = build_user();
 		$user->created_date = DateTime::createFromFormat('Ymd', '20230131'); //single digit month
 		$user->last_login_date = DateTime::createFromFormat('Ymd', '20231105'); //single digit day
 		//Act
@@ -54,7 +55,7 @@ class TestClasses extends TestCase
 	public function testUser_Serialize_1_0_Bools() : void
 	{
 		//Arrange
-		$user = $this->build_user();
+		$user = build_user();
 		$user->is_admin = True;
 		$user->is_deactivated = False;
 		//Act
@@ -67,7 +68,7 @@ class TestClasses extends TestCase
 	public function testUser_Serialize_1_0_DelimiterUsedInString_ThrowsException() : void
 	{
 		//Arrange
-		$user = $this->build_user();
+		$user = build_user();
 		$user->username = "a|b";
 		$user->password_hashed = "c|d";
 		$user->email = "e|f";
@@ -119,7 +120,7 @@ class TestClasses extends TestCase
 	public function testUser_Deserialize_1_0_AllFieldsFound() : void
 	{
 		//Arrange
-		$user = $this->build_user();
+		$user = build_user();
 		$line = $user->serialize(FORMAT_1_0);
 		//Act
 		$result = Eft_User::deserialize($line, FORMAT_1_0);
@@ -138,7 +139,7 @@ class TestClasses extends TestCase
 	
 	public function testUser_Deserialize_1_0_IdField() : void
 	{
-		$user = $this->build_user();
+		$user = build_user();
 
 		//Arrange Leading Zero
 		$line = "01|20230131|0|jack|abcde|j@gmail.com|1234567890|20230315|0";
@@ -164,7 +165,7 @@ class TestClasses extends TestCase
 	
 	public function testUser_Deserialize_1_0_CreatedDateField() : void
 	{
-		$user = $this->build_user();
+		$user = build_user();
 
 		//Arrange Empty
 		$line = "1||0|jack|abcde|j@gmail.com|1234567890|20230315|0";
@@ -199,7 +200,7 @@ class TestClasses extends TestCase
 	
 	public function testUser_Deserialize_1_0_IsAdminField() : void
 	{
-		$user = $this->build_user();
+		$user = build_user();
 
 		//Arrange Empty
 		$line = "1|20230131||jack|abcde|j@gmail.com|1234567890|20230315|0";
@@ -232,19 +233,6 @@ class TestClasses extends TestCase
 	
 	////////////////////////////////////////
 	
-	private function build_user() : Eft_User {
-		$user = new Eft_User();
-		$user->id = 1;
-		$user->created_date = DateTime::createFromFormat('Ymd', '20230131');
-		$user->is_admin = False;
-		$user->username = "jack";
-		$user->password_hashed = "abcde";
-		$user->email = "j@gmail.com";
-		$user->phone_number = "1234567890";
-		$user->last_login_date = DateTime::createFromFormat('Ymd', '20230315');
-		$user->is_deactivated = False;
-		return $user;
-	}
 }
 
 ?>

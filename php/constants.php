@@ -2,6 +2,8 @@
 
 define("MESSAGE_ADD_USER_REQUIRED_ARGUMENTS", "requires username and password");
 define("MESSAGE_CANNOT_CONTAIN_PIPES", "text fields cannot contain pipe (|) characters");
+define("MESSAGE_USERNAME_COLLISION", "usernames must be unique");
+define("MESSAGE_EMAIL_COLLISION", "emails must be unique");
 define("MESSAGE_FILE_NOT_FOUND", "file not found");
 define("MESSAGE_UNKNOWN_DATA_FORMAT", "unknown data format");
 define("MESSAGE_EDIT_RECORD_LOCK_FAILED", "failed to lock file, record was not edited");
