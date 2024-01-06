@@ -1,6 +1,7 @@
 <?php
 
-include("../classes.php");
+include_once("../constants.php");
+include_once("../classes.php");
 
 use PHPUnit\Framework\TestCase;
 
@@ -12,9 +13,8 @@ class TestClasses extends TestCase
 	{
 		//Arrange
 		$user = new Eft_User();
-		$format = "1.0";
 		//Act
-		$result = $user->serialize($format);
+		$result = $user->serialize(FORMAT_1_0);
 		//Assert
 		self::assertSame('||0||||||0', $result);
 	}
@@ -32,9 +32,8 @@ class TestClasses extends TestCase
 		$user->phone_number = "1234567890";
 		$user->last_login_date = DateTime::createFromFormat('Ymd', '20230315');
 		$user->is_deactivated = False;
-		$format = "1.0";
 		//Act
-		$result = $user->serialize($format);
+		$result = $user->serialize(FORMAT_1_0);
 		//Assert
 		self::assertSame("1|20230131|0|jack|abcde|j@gmail.com|1234567890|20230315|0", $result);
 	}
@@ -45,9 +44,8 @@ class TestClasses extends TestCase
 		$user = $this->build_user();
 		$user->created_date = DateTime::createFromFormat('Ymd', '20230131'); //single digit month
 		$user->last_login_date = DateTime::createFromFormat('Ymd', '20231105'); //single digit day
-		$format = "1.0";
 		//Act
-		$result = $user->serialize($format);
+		$result = $user->serialize(FORMAT_1_0);
 		//Assert
 		self::assertTrue(strpos($result, "20230131") !== False);
 		self::assertTrue(strpos($result, "20231105") !== False);
@@ -59,21 +57,32 @@ class TestClasses extends TestCase
 		$user = $this->build_user();
 		$user->is_admin = True;
 		$user->is_deactivated = False;
-		$format = "1.0";
 		//Act
-		$result = $user->serialize($format);
+		$result = $user->serialize(FORMAT_1_0);
 		//Assert
 		self::assertTrue(strpos($result, "|1|".$user->username) !== False);
 		self::assertTrue(strpos($result, "|0") == strlen($result) - 2);
 	}
 	
-	public function testUser_Deserialize_NullLine_ThrowsException() : void
+	public function testUser_Serialize_1_0_DelimiterUsedInString_ThrowsException() : void
+	{
+		//Arrange
+		$user = $this->build_user();
+		$user->username = "a|b";
+		$user->password_hashed = "c|d";
+		$user->email = "e|f";
+		$user->phone_number = "g|h";
+		$this->expectExceptionMessage(MESSAGE_CANNOT_CONTAIN_PIPES);
+		//Act Assert
+		$result = $user->serialize(FORMAT_1_0);
+	}
+	
+	public function testUser_Deserialize_NullLine_ReturnsNull() : void
 	{
 		//Arrange
 		$line = null;
-		$format = "1.0";
 		//Act
-		$result = Eft_User::deserialize($line, $format);
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
 		//Assert
 		self::assertNull($result);
 	}
@@ -92,9 +101,8 @@ class TestClasses extends TestCase
 	{
 		//Arrange
 		$line = "abc|def";
-		$format = "1.0";
 		//Act
-		$result = Eft_User::deserialize($line, $format);
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
 		//Assert
 		self::assertNotNull($result);
 		self::assertSame(0, $result->id);
@@ -112,10 +120,9 @@ class TestClasses extends TestCase
 	{
 		//Arrange
 		$user = $this->build_user();
-		$format = "1.0";
-		$line = $user->serialize($format);
+		$line = $user->serialize(FORMAT_1_0);
 		//Act
-		$result = Eft_User::deserialize($line, $format);
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
 		//Assert
 		self::assertNotNull($result);
 		self::assertSame($user->id, $result->id);
@@ -135,34 +142,93 @@ class TestClasses extends TestCase
 
 		//Arrange Leading Zero
 		$line = "01|20230131|0|jack|abcde|j@gmail.com|1234567890|20230315|0";
-		$format = "1.0";
 		//Act
-		$result = Eft_User::deserialize($line, $format);
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
 		//Assert
 		self::assertSame(1, $result->id);
 
 		//Arrange Large Int
 		$line = "999999999|20230131|0|jack|abcde|j@gmail.com|1234567890|20230315|0";
-		$format = "1.0";
 		//Act
-		$result = Eft_User::deserialize($line, $format);
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
 		//Assert
 		self::assertSame(999999999, $result->id);
 
 		//Arrange No Id Field - Defaults To Zero
 		$line = "|20230131|0|jack|abcde|j@gmail.com|1234567890|20230315|0";
-		$format = "1.0";
 		//Act
-		$result = Eft_User::deserialize($line, $format);
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
 		//Assert
 		self::assertSame(0, $result->id);
 	}
 	
-	//todo deserialize tests, succeess cases, and error cases for each field
+	public function testUser_Deserialize_1_0_CreatedDateField() : void
+	{
+		$user = $this->build_user();
+
+		//Arrange Empty
+		$line = "1||0|jack|abcde|j@gmail.com|1234567890|20230315|0";
+		//Act
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertNull($result->created_date);
+
+		//Arrange Invalid Characters
+		$line = "1|text|0|jack|abcde|j@gmail.com|1234567890|20230315|0";
+		//Act
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertNull($result->created_date);
+
+		//Arrange Invalid Format
+		$line = "1|2023-01-31|0|jack|abcde|j@gmail.com|1234567890|20230315|0";
+		//Act
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertNull($result->created_date);
+
+		//Arrange Success
+		$line = "1|20230131|0|jack|abcde|j@gmail.com|1234567890|20230315|0";
+		//Act
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertSame('2023', $result->created_date->format('Y'));
+		self::assertSame('01', $result->created_date->format('m'));
+		self::assertSame('31', $result->created_date->format('d'));
+	}
 	
-	//todo move "1.0" magic string to constants
-	
-	//todo test if username or password hash contains pipe
+	public function testUser_Deserialize_1_0_IsAdminField() : void
+	{
+		$user = $this->build_user();
+
+		//Arrange Empty
+		$line = "1|20230131||jack|abcde|j@gmail.com|1234567890|20230315|0";
+		//Act
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertFalse($result->is_admin);
+
+		//Arrange Invalid Format
+		$line = "1|20230131|true|jack|abcde|j@gmail.com|1234567890|20230315|0";
+		//Act
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertFalse($result->is_admin);
+
+		//Arrange Explicit False
+		$line = "1|20230131|0|jack|abcde|j@gmail.com|1234567890|20230315|0";
+		//Act
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertFalse($result->is_admin);
+
+		//Arrange Explicit True
+		$line = "1|20230131|1|jack|abcde|j@gmail.com|1234567890|20230315|0";
+		//Act
+		$result = Eft_User::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertTrue($result->is_admin);
+	}
 	
 	////////////////////////////////////////
 	

@@ -10,4 +10,8 @@ function eft_get_element($array, $index) {
 	return null;
 }
 
+// Implementing a PHP 8 built-in util
+function str_contains($string, $substring) : bool {
+	return (strpos($string, $substring, 0) != False);
+}
 ?>

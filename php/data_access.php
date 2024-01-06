@@ -89,7 +89,7 @@ function eft_persist_new_user_callback($file_pointer) : int {
 	$format_version = eft_get_data_format_version($file_pointer);
 	$users = array();
 	switch($format_version) {
-		case "1.0": $users = eft_deserialize_users_format_1_0($file_pointer); break;
+		case FORMAT_1_0: $users = eft_deserialize_users_format_1_0($file_pointer); break;
 		default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
 	}
 	//TODO

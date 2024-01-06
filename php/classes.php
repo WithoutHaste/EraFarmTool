@@ -18,7 +18,7 @@ class Eft_User {
 	// end-line character is not included
 	public function serialize(?string $format) : string {
 		switch($format) {
-			case "1.0": return $this->serialize_1_0();
+			case FORMAT_1_0: return $this->serialize_1_0();
 			default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
 		}
 	}
@@ -26,6 +26,13 @@ class Eft_User {
 	// returns string from serializing this data format version 1.0 user record
 	// end-line character is not included
 	private function serialize_1_0() : string {
+		if(str_contains($this->username, '|')
+			|| str_contains($this->password_hashed, '|')
+			|| str_contains($this->email, '|')
+			|| str_contains($this->phone_number, '|')) {
+			throw new Exception(MESSAGE_CANNOT_CONTAIN_PIPES);
+		}
+		
 		return "{$this->id}|{$this->serialize_date($this->created_date)}|{$this->serialize_bool($this->is_admin)}|{$this->username}|{$this->password_hashed}|{$this->email}|{$this->phone_number}|{$this->serialize_date($this->last_login_date)}|{$this->serialize_bool($this->is_deactivated)}";
 	}
 	
@@ -46,7 +53,7 @@ class Eft_User {
 	// returns object from deserializing a user record
 	public static function deserialize(?string $line, ?string $format) : ?Eft_User {
 		switch($format) {
-			case "1.0": return Eft_User::deserialize_1_0($line);
+			case FORMAT_1_0: return Eft_User::deserialize_1_0($line);
 			default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
 		}
 	}
