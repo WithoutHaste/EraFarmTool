@@ -3,8 +3,14 @@
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8">
         <title>Login - Era Farm Tool</title>
+		<script type="text/javascript" src="js/utils.js"></script>
 		<script type="text/javascript" src="js/attribution.js"></script>
 		<link rel="stylesheet" type="text/css" href="css/default.css" />
+		<style type='text/css'>
+			.error {
+				color: #bf190d; /*deep red*/
+			}
+		</style>
     </head>
     <body>
 		<h2>Era Farm Tool</h2>
@@ -12,10 +18,44 @@
 			<tr><td>Username: </td><td><input name='username' /></td></tr>
 			<tr><td>Password: </td><td><input name='password' type='password' /></td></tr>
 		</table>
-		<button>Login</button>
+		<button onclick='submitLogin()'>Login</button>
+		<div id='container_errors'>
+		</div>
     </body>
 </html>
 
 <script type='text/javascript'>
+
+function submitLogin(event) {
+	let params = [];
+	params['u'] = document.getElementsByName('username')[0].value;
+	params['p'] = document.getElementsByName('password')[0].value;
+	ajaxPost('login.php', params, loginSuccess, loginError);
+}
+
+function loginSuccess(message) {
+
+//todo
+//if success, set cookie and redirect to dashboard
+
+	console.log('success');
+	console.log(message);
+}
+
+function loginError(xhr) {
+	const container = document.getElementById('container_errors');
+	let element = document.createElement('div');
+	element.classList.add('error');
+	element.innerHTML = 'Error: login failed at '+formattedTimestamp()+'.';
+	container.prepend(element);
+
+	console.log('error');
+	console.log(xhr);
+}
+
+function formattedTimestamp() {
+	const now = new Date();
+	return `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+}
 
 </script>
