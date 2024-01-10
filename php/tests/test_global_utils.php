@@ -76,6 +76,27 @@ class TestGlobalUtils extends TestCase
 		//Assert
 		self::assertTrue($result);
 	}
+	
+	//////////////////////////////////////
+	
+	public function testNewGuid() : void
+	{
+		//Arrange Has Correct Format
+		//Act
+		$result = new_guid();
+		//Assert
+		self::assertSame(1, preg_match('/^\w{8}\-\w{4}\-\w{4}\-\w{4}\-\w{12}$/', $result));
+
+		//Arrange Randomized
+		//Act
+		$result_a = new_guid();
+		$result_b = new_guid();
+		$result_c = new_guid();
+		//Assert
+		self::assertNotSame($result_a, $result_b);
+		self::assertNotSame($result_a, $result_c);
+		self::assertNotSame($result_b, $result_c);
+	}
 
 }
 

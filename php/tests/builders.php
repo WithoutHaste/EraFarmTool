@@ -1,5 +1,6 @@
 <?php
 
+include_once("../global_utils.php");
 include_once("../classes.php");
 
 function build_user() : Eft_User 
@@ -13,6 +14,7 @@ function build_user() : Eft_User
 	$user->email = "j@gmail.com";
 	$user->phone_number = "1234567890";
 	$user->last_login_date = DateTime::createFromFormat('Ymd', '20230315');
+	$user->session_key = new_guid();
 	$user->is_deactivated = False;
 	return $user;
 }
@@ -27,6 +29,7 @@ function users_match(Eft_User $a, Eft_User $b) : bool
 	if($a->email != $b->email) return false;
 	if($a->phone_number != $b->phone_number) return false;
 	if($a->last_login_date->format('Y-m-d') != $b->last_login_date->format('Y-m-d')) return false;
+	if($a->session_key != $b->session_key) return false;
 	if($a->is_deactivated != $b->is_deactivated) return false;
 	return true;
 }

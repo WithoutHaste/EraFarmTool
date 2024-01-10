@@ -6,6 +6,8 @@ use PHPUnit\Framework\TestCase;
 
 class TestSecurity extends TestCase
 {
+	//////////////////////////////
+	
 	public function testPasswordsAreSalted() : void
 	{
 		//Arrange
@@ -23,10 +25,12 @@ class TestSecurity extends TestCase
 		$password_raw = "redyellowblue";
 		$password_hashed = eft_create_password_hash($password_raw);
 		//Act
-		$verify_result = eft_verify_login($password_raw, $password_hashed);
+		$verify_result = eft_verify_password($password_raw, $password_hashed);
 		//Assert
 		self::assertTrue($verify_result);
 	}
+
+	//////////////////////////////
 }
 
 ?>

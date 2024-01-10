@@ -44,6 +44,15 @@ function eft_get_data_format_version($file_pointer) : ?string {
 	return $matches[1][0];
 }
 
+// returns an array of Eft_Users
+function eft_deserialize_users($file_pointer) : array {
+	$format_version = eft_get_data_format_version($file_pointer);
+	switch($format_version) {
+		case FORMAT_1_0: return eft_deserialize_users_format_1_0($file_pointer);
+		default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
+	}
+}
+
 // read in all users.txt records, format 1.0
 // assumes the file format has already been correctly determined
 // $file_pointer expects an open file stream resource
@@ -87,16 +96,10 @@ function eft_get_data_lines($file_pointer) {
 function eft_persist_new_user(Eft_User $user) : int {
 	return eft_use_file_lock(DATA_FILE_USERS, 'eft_persist_new_user_callback', $user);
 }
-
 // intended to be passed as a callback to a data_access.php function
 // returns id of the user
 function eft_persist_new_user_callback($file_pointer, $new_user) : int {
-	$format_version = eft_get_data_format_version($file_pointer);
-	$users = array();
-	switch($format_version) {
-		case FORMAT_1_0: $users = eft_deserialize_users_format_1_0($file_pointer); break;
-		default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
-	}
+	$users = eft_deserialize_users($file_pointer);
 	$max_id = 0;
 	foreach($users as $user) {
 		if($user->username == $new_user->username) {
@@ -109,12 +112,84 @@ function eft_persist_new_user_callback($file_pointer, $new_user) : int {
 			$max_id = $user->id;
 		}
 	}
+	$format_version = eft_get_data_format_version($file_pointer);
 	$new_user->id = $max_id + 1;
 	$new_user->created_date = new DateTime();
 	$new_user_serialized = $new_user->serialize($format_version);
 	fseek($file_pointer, 0, SEEK_END); //go to end of file
 	fwrite($file_pointer, "\n".$new_user_serialized);
 	return $new_user->id;
+}
+
+// Returns user record or null
+function eft_get_user_by_id($id) : ?Eft_User {
+	return eft_use_file_lock(DATA_FILE_USERS, 'eft_get_user_by_id_callback', $id);
+}
+// intended to be passed as a callback to a data_access.php function
+// returns user record or null
+function eft_get_user_by_id_callback($file_pointer, $id) : ?Eft_User {
+	$users = eft_deserialize_users($file_pointer);
+	foreach($users as $user) {
+		if($user->id == $id) {
+			return $user;
+		}
+	}
+	return null;
+}
+
+// Returns user record or null
+function eft_get_user_by_username($username) : ?Eft_User {
+	return eft_use_file_lock(DATA_FILE_USERS, 'eft_get_user_by_username_callback', $username);
+}
+// intended to be passed as a callback to a data_access.php function
+// returns user record or null
+function eft_get_user_by_username_callback($file_pointer, $username) : ?Eft_User {
+	$users = eft_deserialize_users($file_pointer);
+	foreach($users as $user) {
+		if($user->username == $username) {
+			return $user;
+		}
+	}
+	return null;
+}
+
+// Returns nothing
+function eft_update_user_with_login_session($id, $session_key) {
+	$params = array("id"->$id, "session_key"=>$session_key);
+	return eft_use_file_lock(DATA_FILE_USERS, 'eft_update_user_with_login_session_callback', $params);
+}
+// intended to be passed as a callback to a data_access.php function
+// Returns nothing
+function eft_update_user_with_login_session_callback($file_pointer, $params) {
+	$id = $params["id"];
+	$session_key = $params["session_key"];
+	
+	//finding the user and updating the record are done within the same file lock
+	$users = eft_deserialize_users($file_pointer);
+	$found_user = false;
+	foreach($users as $user) {
+		if($user->id == $id) {
+			$user->last_login_date = new DateTime();
+			$user->session_key = $session_key;
+			$found_user = true;
+			break;
+		}
+	}
+	if(!$found_user) {
+		throw new Exception(MESSAGE_EDIT_USER_FAILED);
+	}
+	$format_version = eft_get_data_format_version($file_pointer);
+	eft_persist_users($file_pointer, $format_version, $users);
+}
+
+// Overwrites the whole file with the array of users
+function eft_persist_users($file_pointer, $format_version, $users) {
+	rewind($file_pointer);
+	fwrite($file_pointer, "#version:".$format_version);
+	fwrite($file_pointer, "\n".Eft_User::serialize_headers($format_version));
+	foreach($users as $user) {
+		fwrite($file_pointer, "\n".$user->serialize($format_version));
+	}
 }
 
 ?>

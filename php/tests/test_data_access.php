@@ -103,6 +103,11 @@ class TestDataAccess extends TestCase
 	
 	/////////////////////////////////////////////////
 	
+	//TODO test eft_deserialize_users
+	
+	
+	/////////////////////////////////////////////////
+	
 	public function testDeserializeUsersFormat_1_0_Success() : void 
 	{
 		//Arrange
@@ -290,6 +295,182 @@ class TestDataAccess extends TestCase
 		fclose($file_pointer);
 	}
 	
+	/////////////////////////////////////////////////
+	
+	public function testGetUserByIdCallback_UserNotFound_ReturnsNull() : void
+	{
+		//Arrange
+		$users = array(build_user());
+		$users[0]->id = 2;
+		$file_name = "./temp/persist_006.txt";
+		$file_pointer = fopen($file_name, "w");
+		eft_persist_users($file_pointer, FORMAT_1_0, $users);
+		fclose($file_pointer);
+
+		$id = 12;
+		$file_pointer = fopen($file_name, "r+");
+		//Act
+		$result = eft_get_user_by_id_callback($file_pointer, $id);
+		//Assert
+		self::assertNull($result);
+		//Cleanup
+		fclose($file_pointer);
+	}
+	
+	public function testGetUserByIdCallback_Success() : void
+	{
+		//Arrange
+		$users = array(build_user(), build_user(), build_user());
+		$users[0]->id = 2;
+		$users[1]->id = 4;
+		$users[2]->id = 8;
+		$file_name = "./temp/persist_007.txt";
+		$file_pointer = fopen($file_name, "w");
+		eft_persist_users($file_pointer, FORMAT_1_0, $users);
+		fclose($file_pointer);
+
+		$id = 4;
+		$file_pointer = fopen($file_name, "r+");
+		//Act
+		$result = eft_get_user_by_id_callback($file_pointer, $id);
+		//Assert
+		self::assertTrue(users_match($users[1], $result));
+		//Cleanup
+		fclose($file_pointer);
+	}
+	
+	/////////////////////////////////////////////////
+
+	public function testGetUserByUsernameCallback_UserNotFound_ReturnsNull() : void
+	{
+		//Arrange
+		$users = array(build_user());
+		$users[0]->username = "fred";
+		$file_name = "./temp/persist_008.txt";
+		$file_pointer = fopen($file_name, "w");
+		eft_persist_users($file_pointer, FORMAT_1_0, $users);
+		fclose($file_pointer);
+
+		$username = "tony";
+		$file_pointer = fopen($file_name, "r+");
+		//Act
+		$result = eft_get_user_by_username_callback($file_pointer, $username);
+		//Assert
+		self::assertNull($result);
+		//Cleanup
+		fclose($file_pointer);
+	}
+	
+	public function testGetUserByUsernameCallback_Success() : void
+	{
+		//Arrange
+		$users = array(build_user(), build_user(), build_user());
+		$users[0]->username = "fred";
+		$users[1]->username = "tony";
+		$users[2]->username = "david";
+		$file_name = "./temp/persist_009.txt";
+		$file_pointer = fopen($file_name, "w");
+		eft_persist_users($file_pointer, FORMAT_1_0, $users);
+		fclose($file_pointer);
+
+		$username = "tony";
+		$file_pointer = fopen($file_name, "r+");
+		//Act
+		$result = eft_get_user_by_username_callback($file_pointer, $username);
+		//Assert
+		self::assertTrue(users_match($users[1], $result));
+		//Cleanup
+		fclose($file_pointer);
+	}
+	
+	/////////////////////////////////////////////////
+
+	public function testUpdateUserWithLoginSessionCallback_UserNotFound_ThrowsException() : void
+	{
+		//Arrange
+		$users = array(build_user());
+		$users[0]->id = 3;
+		$file_name = "./temp/persist_010.txt";
+		$file_pointer = fopen($file_name, "w");
+		eft_persist_users($file_pointer, FORMAT_1_0, $users);
+		fclose($file_pointer);
+
+		$id = 15;
+		$session_key = new_guid();
+		$params = array("id"=>$id, "session_key"=>$session_key);
+		$file_pointer = fopen($file_name, "r+");
+		$this->expectExceptionMessage(MESSAGE_EDIT_USER_FAILED);
+		//Act Assert
+		eft_update_user_with_login_session_callback($file_pointer, $params);
+		//Cleanup
+		fclose($file_pointer);
+	}
+	
+	public function testUpdateUserWithLoginSessionCallback_Success() : void
+	{
+		//Arrange
+		$users = array(build_user(), build_user(), build_user());
+		$users[0]->id = 3;
+		$users[1]->id = 15;
+		$users[2]->id = 2;
+		$file_name = "./temp/persist_011.txt";
+		$file_pointer = fopen($file_name, "w");
+		eft_persist_users($file_pointer, FORMAT_1_0, $users);
+		fclose($file_pointer);
+
+		$id = 15;
+		$session_key = new_guid();
+		$params = array("id"=>$id, "session_key"=>$session_key);
+		$file_pointer = fopen($file_name, "r+");
+		//Act
+		eft_update_user_with_login_session_callback($file_pointer, $params);
+		//Assert
+		fclose($file_pointer);
+		$file_pointer = fopen($file_name, "r+");
+		$result_users = eft_deserialize_users_format_1_0($file_pointer);
+		self::assertSame(count($users), count($result_users));
+		self::assertTrue(users_match($users[0], $result_users[0]));
+		self::assertTrue(users_match($users[2], $result_users[2]));
+
+		$users[1]->last_login_date = new DateTime();
+		$users[1]->session_key = $session_key;
+		self::assertTrue(users_match($users[1], $result_users[1]));
+		//Cleanup
+		fclose($file_pointer);
+	}
+	
+	/////////////////////////////////////////////////
+
+	public function testPersistUsers_Success() : void
+	{
+		//Arrange
+		$file_name = "./temp/persist_012.txt";
+		$file_pointer = fopen($file_name, "w");
+		fwrite($file_pointer, "some\n");
+		fwrite($file_pointer, "lines\n");
+		fwrite($file_pointer, "of anything");
+		fclose($file_pointer);
+
+		$users = array(build_user(), build_user(), build_user());
+		$users[0]->id = 3;
+		$users[0]->id = 15;
+		$users[0]->id = 2;
+		$file_pointer = fopen($file_name, "r+");
+		//Act
+		eft_persist_users($file_pointer, FORMAT_1_0, $users);
+		//Assert
+		fclose($file_pointer);
+		$file_pointer = fopen($file_name, "r+");
+		$result_users = eft_deserialize_users_format_1_0($file_pointer);
+		self::assertSame(count($users), count($result_users));
+		self::assertTrue(users_match($users[0], $result_users[0]));
+		self::assertTrue(users_match($users[1], $result_users[1]));
+		self::assertTrue(users_match($users[2], $result_users[2]));
+		//Cleanup
+		fclose($file_pointer);
+	}
+	
+	/////////////////////////////////////////////////
 }
 
 ?>

@@ -12,7 +12,23 @@ class Eft_User {
 	public $email;
 	public $phone_number;
 	public $last_login_date;
+	public $session_key;
 	public $is_deactivated;
+
+	// returns string from serializing this user headers
+	// end-line character is not included
+	public static function serialize_headers(?string $format) : string {
+		switch($format) {
+			case FORMAT_1_0: return Eft_User::serialize_headers_1_0();
+			default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
+		}
+	}
+	
+	// returns string from serializing this data format version 1.0 user headers
+	// end-line character is not included
+	private function serialize_headers_1_0() : string {
+		return "Id|CreatedDate|IsAdmin|Username|PasswordHashed|Email|PhoneNumber|LastLoginDate|SessionKey|IsDeactivated";
+	}
 
 	// returns string from serializing this user record
 	// end-line character is not included
@@ -33,7 +49,7 @@ class Eft_User {
 			throw new Exception(MESSAGE_CANNOT_CONTAIN_PIPES);
 		}
 		
-		return "{$this->id}|{$this->serialize_date($this->created_date)}|{$this->serialize_bool($this->is_admin)}|{$this->username}|{$this->password_hashed}|{$this->email}|{$this->phone_number}|{$this->serialize_date($this->last_login_date)}|{$this->serialize_bool($this->is_deactivated)}";
+		return "{$this->id}|{$this->serialize_date($this->created_date)}|{$this->serialize_bool($this->is_admin)}|{$this->username}|{$this->password_hashed}|{$this->email}|{$this->phone_number}|{$this->serialize_date($this->last_login_date)}|{$this->session_key}|{$this->serialize_bool($this->is_deactivated)}";
 	}
 	
 	private function serialize_date($date) : string {
@@ -73,7 +89,8 @@ class Eft_User {
 		$user->email = eft_get_element($columns, 5);
 		$user->phone_number = eft_get_element($columns, 6);
 		$user->last_login_date = Eft_User::deserialize_date(eft_get_element($columns, 7));
-		$user->is_deactivated = Eft_User::deserialize_bool(eft_get_element($columns, 8));
+		$user->session_key = eft_get_element($columns, 8);
+		$user->is_deactivated = Eft_User::deserialize_bool(eft_get_element($columns, 9));
 		return $user;
 	}
 	
