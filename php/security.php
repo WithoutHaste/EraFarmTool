@@ -44,4 +44,14 @@ function eft_format_auth_key($id, $session_key) : string {
 	return md5($id."|".$session_key);
 }
 
+function eft_verify_auth_key($id, $auth_key) : bool {
+	$user = eft_get_user_by_id($id);
+	if($user == null) {
+		return False;
+	}
+	
+	$expected_auth_key = eft_format_auth_key($id, $user->session_key);
+	return ($auth_key == $expected_auth_key);
+}
+
 ?>

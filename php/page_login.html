@@ -34,12 +34,13 @@ function submitLogin(event) {
 }
 
 function loginSuccess(message) {
+	console.log('login successful');
 
-//todo
-//if success, set cookie and redirect to dashboard
-
-	console.log('success');
-	console.log(message);
+	const json = JSON.parse(message);
+	document.cookie = `id=${json.id}; SameSite=Strict`;
+	document.cookie = `auth_key=${json.auth_key}; SameSite=Strict`;
+	
+	window.location.href = 'index.php';
 }
 
 function loginError(xhr) {
