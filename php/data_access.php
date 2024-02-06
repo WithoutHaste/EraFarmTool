@@ -11,7 +11,10 @@ function eft_use_file_lock(string $file_name, $callback, $callback_arguments) {
 	}
 	
 	$file_pointer = fopen($file_name, "r+");
-	if (flock($file_pointer, LOCK_EX)) {  // acquire an exclusive lock
+	if($file_pointer == false) {
+		throw new Exception(MESSAGE_FILE_CANNOT_BE_OPENED);
+	}
+	if (flock($file_pointer, LOCK_EX|LOCK_NB)) {  // acquire an exclusive lock, but don't block if the lock fails
 		$result = $callback($file_pointer, $callback_arguments);
 		fflush($file_pointer);            // flush output before releasing the lock
 		flock($file_pointer, LOCK_UN);    // release the lock
@@ -44,7 +47,9 @@ function eft_get_data_format_version($file_pointer) : ?string {
 	return $matches[1][0];
 }
 
-// returns an array of Eft_Users
+/**
+ * @return Eft_User[]
+ */
 function eft_deserialize_users($file_pointer) : array {
 	$format_version = eft_get_data_format_version($file_pointer);
 	switch($format_version) {
@@ -53,10 +58,12 @@ function eft_deserialize_users($file_pointer) : array {
 	}
 }
 
-// read in all users.txt records, format 1.0
-// assumes the file format has already been correctly determined
-// $file_pointer expects an open file stream resource
-// returns an array of Eft_User objects
+/**
+ * read in all users.txt records, format 1.0
+ * assumes the file format has already been correctly determined
+ * @param $file_pointer expects an open file stream resource
+ * @return Eft_User[]
+ */
 function eft_deserialize_users_format_1_0($file_pointer) : array {
 	$lines = eft_get_data_lines($file_pointer);
 	$users = array();
@@ -155,7 +162,7 @@ function eft_get_user_by_username_callback($file_pointer, $username) : ?Eft_User
 
 // Returns nothing
 function eft_update_user_with_login_session($id, $session_key) {
-	$params = array("id"->$id, "session_key"=>$session_key);
+	$params = array("id"=>$id, "session_key"=>$session_key);
 	return eft_use_file_lock(DATA_FILE_USERS, 'eft_update_user_with_login_session_callback', $params);
 }
 // intended to be passed as a callback to a data_access.php function

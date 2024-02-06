@@ -103,8 +103,40 @@ class TestDataAccess extends TestCase
 	
 	/////////////////////////////////////////////////
 	
-	//TODO test eft_deserialize_users
-	
+	public function testDeserializeUsers_FormatNotFound_ThrowsException() : void
+	{
+		//Arrange
+		$file_name = "./temp/deserialize_001.txt";
+		$file_pointer = fopen($file_name, "w");
+		fwrite($file_pointer, "headers\n");
+		fwrite($file_pointer, "1|20230131|0|jack|abcde|j@gmail.com|1234567890|20230315|0");
+		fclose($file_pointer);
+		
+		$file_pointer = fopen($file_name, "r+");
+		$this->expectExceptionMessage(MESSAGE_UNKNOWN_DATA_FORMAT);
+		//Act Assert
+		$result = eft_deserialize_users($file_pointer);
+		//Cleanup
+		fclose($file_pointer);
+	}
+
+	public function testDeserializeUsers_UnknownFormat_ThrowsException() : void
+	{
+		//Arrange
+		$file_name = "./temp/deserialize_002.txt";
+		$file_pointer = fopen($file_name, "w");
+		fwrite($file_pointer, "#version:unknown\n");
+		fwrite($file_pointer, "headers\n");
+		fwrite($file_pointer, "1|20230131|0|jack|abcde|j@gmail.com|1234567890|20230315|0");
+		fclose($file_pointer);
+		
+		$file_pointer = fopen($file_name, "r+");
+		$this->expectExceptionMessage(MESSAGE_UNKNOWN_DATA_FORMAT);
+		//Act Assert
+		$result = eft_deserialize_users($file_pointer);
+		//Cleanup
+		fclose($file_pointer);
+	}	
 	
 	/////////////////////////////////////////////////
 	

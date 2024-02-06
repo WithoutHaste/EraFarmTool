@@ -1,10 +1,11 @@
 # How To (Admins)
 
-## "Install" EFT on Server
+## Install EFT on Server
 
 - Install PHP 7 or later.
 - Copy all the `php` files to somewhere under a `public_html` folder.
-  - Include all subfolders; subfolder `tests` is optional.
+  - Include all subfolders (folder `tests` is optional).
+  - Update GROUP of files under `data` folder to allow apache/php to edit them: `sudo chgrp www-data data/*.txt`. 
 - Create the first admin user from the command line. Everything else can be setup through the GUI/webpage.
   
 ## Command Line Tool

@@ -34,7 +34,7 @@ function eft_login(string $username, string $password_raw) {
 		throw new Exception(MESSAGE_UNAUTHORIZED);
 	}
 	
-	$guid = com_create_guid();
+	$guid = new_guid();
 	eft_update_user_with_login_session($user->id, $guid);
 	$auth_key = eft_format_auth_key($user->id, $guid);
 	return array("id"=>$user->id, "auth_key"=>$auth_key);

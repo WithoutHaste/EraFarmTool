@@ -5,6 +5,7 @@ define("MESSAGE_CANNOT_CONTAIN_PIPES", "text fields cannot contain pipe (|) char
 define("MESSAGE_USERNAME_COLLISION", "usernames must be unique");
 define("MESSAGE_EMAIL_COLLISION", "emails must be unique");
 define("MESSAGE_FILE_NOT_FOUND", "file not found");
+define("MESSAGE_FILE_CANNOT_BE_OPENED", "file cannot be opened");
 define("MESSAGE_UNKNOWN_DATA_FORMAT", "unknown data format");
 define("MESSAGE_EDIT_RECORD_LOCK_FAILED", "failed to lock file, record was not edited");
 define("MESSAGE_EDIT_USER_FAILED", "failed to edit a user record");
