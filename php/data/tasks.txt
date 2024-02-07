@@ -1,0 +1,2 @@
+#version:1.0
+Id|CreatedByUserId|CreatedDate|DueDate|Text|IsClosed|ClosedByUserId|ClosedDate|ClosingText

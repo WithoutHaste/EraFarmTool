@@ -34,4 +34,33 @@ function users_match(Eft_User $a, Eft_User $b) : bool
 	return true;
 }
 
+function build_task() : Eft_Task
+{
+	$task = new Eft_Task();
+	$task->id = 1;
+	$task->created_by_user_id = 2;
+	$task->created_date = DateTime::createFromFormat('Ymd', '20230131');
+	$task->due_date = DateTime::createFromFormat('Ymd', '20230215');
+	$task->text = 'llama llama';
+	$task->is_closed = True;
+	$task->closed_by_user_id = 3;
+	$task->closed_date = DateTime::createFromFormat('Ymd', '20230216');
+	$task->closing_text = 'giraffe giraffe';
+	return $task;
+}
+
+function tasks_match(Eft_Task $a, Eft_Task $b) : bool
+{
+	if($a->id != $b->id) return false;
+	if($a->created_by_user_id != $b->created_by_user_id) return false;
+	if($a->created_date->format('Y-m-d') != $b->created_date->format('Y-m-d')) return false;
+	if($a->due_date->format('Y-m-d') != $b->due_date->format('Y-m-d')) return false;
+	if($a->text != $b->text) return false;
+	if($a->is_closed != $b->is_closed) return false;
+	if($a->closed_by_user_id != $b->closed_by_user_id) return false;
+	if($a->closed_date->format('Y-m-d') != $b->closed_date->format('Y-m-d')) return false;
+	if($a->closing_text != $b->closing_text) return false;
+	return true;
+}
+
 ?>

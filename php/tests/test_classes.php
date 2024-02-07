@@ -246,6 +246,292 @@ class TestClasses extends TestCase
 	
 	////////////////////////////////////////
 	
+	public function testTask_SerializeHeaders_UnknownVersion_ThrowsException() : void
+	{
+		//Arrange
+		$format = "any";
+		$this->expectExceptionMessage(MESSAGE_UNKNOWN_DATA_FORMAT);
+		//Act Assert
+		$result = Eft_Task::serialize_headers($format);
+	}	
+	
+	public function testTask_SerializeHeaders_1_0() : void
+	{
+		//Arrange
+		//Act
+		$result = Eft_Task::serialize_headers(FORMAT_1_0);
+		$fields = explode('|', $result);
+		//Assert
+		self::assertSame(9, count($fields));
+	}	
+	
+	///////////////////////////////////
+	
+	public function testTask_Serialize_1_0_DefaultTask() : void
+	{
+		//Arrange
+		$task = new Eft_Task();
+		//Act
+		$result = $task->serialize(FORMAT_1_0);
+		//Assert
+		self::assertSame('|||||0|||', $result);
+	}
+	
+	public function testTask_Serialize_1_0_FullTask() : void
+	{
+		//Arrange
+		$task = new Eft_Task();
+		$task->id = 1;
+		$task->created_by_user_id = 2;
+		$task->created_date = DateTime::createFromFormat('Ymd', '20230131');
+		$task->due_date = DateTime::createFromFormat('Ymd', '20230215');
+		$task->text = 'abcdef';
+		$task->is_closed = True;
+		$task->closed_by_user_id = 3;
+		$task->closed_date = DateTime::createFromFormat('Ymd', '20230216');
+		$task->closing_text = 'hijklm';
+		//Act
+		$result = $task->serialize(FORMAT_1_0);
+		//Assert
+		self::assertSame("1|2|20230131|20230215|abcdef|1|3|20230216|hijklm", $result);
+	}
+	
+	public function testTask_Serialize_1_0_Dates() : void
+	{
+		//Arrange
+		$task = build_task();
+		$task->created_date = DateTime::createFromFormat('Ymd', '20230131'); //single digit month
+		$task->due_date = DateTime::createFromFormat('Ymd', '20231105'); //single digit day
+		//Act
+		$result = $task->serialize(FORMAT_1_0);
+		//Assert
+		self::assertTrue(strpos($result, "20230131") !== False);
+		self::assertTrue(strpos($result, "20231105") !== False);
+	}
+	
+	public function testTask_Serialize_1_0_Bools() : void
+	{
+		//Arrange True
+		$task = build_task();
+		$task->is_closed = True;
+		//Act
+		$result = $task->serialize(FORMAT_1_0);
+		//Assert
+		self::assertTrue(strpos($result, $task->text."|1|") !== False);
+
+		//Arrange False
+		$task->is_closed = False;
+		//Act
+		$result = $task->serialize(FORMAT_1_0);
+		//Assert
+		self::assertTrue(strpos($result, $task->text."|0|") !== False);
+	}
+	
+	public function testTask_Serialize_1_0_DelimiterUsedInString_Replaced() : void
+	{
+		//Arrange
+		$task = build_task();
+		$task->text = "a|b";
+		$task->closing_text = "c|d";
+		//Act
+		$result = $task->serialize(FORMAT_1_0);
+		//Assert
+		self::assertTrue(strpos($result, "a-b") !== False);
+		self::assertTrue(strpos($result, "c-d") !== False);
+	}
+	
+	public function testTask_Serialize_1_0_EndLineUsedInString_Replaced() : void
+	{
+		//Arrange
+		$task = build_task();
+		$task->text = "a\nb";
+		$task->closing_text = "c\nd";
+		//Act
+		$result = $task->serialize(FORMAT_1_0);
+		//Assert
+		self::assertTrue(strpos($result, "a".ENCODED_END_LINE."b") !== False);
+		self::assertTrue(strpos($result, "c".ENCODED_END_LINE."d") !== False);
+	}
+	
+	public function testTask_Deserialize_NullLine_ReturnsNull() : void
+	{
+		//Arrange
+		$line = null;
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertNull($result);
+	}
+	
+	public function testTask_Deserialize_UnknownVersion_ThrowsException() : void
+	{
+		//Arrange
+		$line = "a|b|c";
+		$format = "any";
+		$this->expectExceptionMessage(MESSAGE_UNKNOWN_DATA_FORMAT);
+		//Act Assert
+		$result = Eft_Task::deserialize($line, $format);
+	}
+	
+	public function testTask_Deserialize_1_0_InvalidFormat_ReturnsDefaultValues() : void
+	{
+		//Arrange
+		$line = "abc|def";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertNotNull($result);
+		self::assertSame(0, $result->id);
+		self::assertSame(0, $result->created_by_user_id);
+		self::assertSame(null, $result->created_date);
+		self::assertSame(null, $result->due_date);
+		self::assertSame('', $result->text);
+		self::assertSame(false, $result->is_closed);
+		self::assertSame(0, $result->closed_by_user_id);
+		self::assertSame(null, $result->closed_date);
+		self::assertSame('', $result->closing_text);
+	}
+	
+	public function testTask_Deserialize_1_0_AllFieldsFound() : void
+	{
+		//Arrange
+		$task = build_task();
+		$line = $task->serialize(FORMAT_1_0);
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertNotNull($result);
+		self::assertTrue(tasks_match($task, $result));
+	}
+	
+	public function testTask_Deserialize_1_0_IdField() : void
+	{
+		$task = build_task();
+
+		//Arrange Leading Zero
+		$line = "01|02|20230131|20230215|abcdef|1|03|20230216|hijklm";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertSame(1, $result->id);
+		self::assertSame(2, $result->created_by_user_id);
+		self::assertSame(3, $result->closed_by_user_id);
+
+		//Arrange Large Int
+		$line = "999999999|999999998|20230131|20230215|abcdef|1|999999997|20230216|hijklm";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertSame(999999999, $result->id);
+		self::assertSame(999999998, $result->created_by_user_id);
+		self::assertSame(999999997, $result->closed_by_user_id);
+
+		//Arrange No Id Field - Defaults To Zero
+		$line = "||20230131|20230215|abcdef|1||20230216|hijklm";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertSame(0, $result->id);
+		self::assertSame(0, $result->created_by_user_id);
+		self::assertSame(0, $result->closed_by_user_id);
+	}
+	
+	public function testTask_Deserialize_1_0_DateFields() : void
+	{
+		//Arrange Empty
+		$line = "1|2|||abcdef|1|3||hijklm";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertNull($result->created_date);
+		self::assertNull($result->due_date);
+		self::assertNull($result->closed_date);
+
+		//Arrange Invalid Characters
+		$line = "1|2|text|text|abcdef|1|3|text|hijklm";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertNull($result->created_date);
+		self::assertNull($result->due_date);
+		self::assertNull($result->closed_date);
+
+		//Arrange Invalid Format
+		$line = "1|2|2023-01-31|2023-02-15|abcdef|1|3|2023-02-16|hijklm";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertNull($result->created_date);
+		self::assertNull($result->due_date);
+		self::assertNull($result->closed_date);
+
+		//Arrange Success
+		$line = "1|2|20230131|20230215|abcdef|1|3|20230216|hijklm";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertSame('2023', $result->created_date->format('Y'));
+		self::assertSame('01', $result->created_date->format('m'));
+		self::assertSame('31', $result->created_date->format('d'));
+		self::assertSame('2023', $result->due_date->format('Y'));
+		self::assertSame('02', $result->due_date->format('m'));
+		self::assertSame('15', $result->due_date->format('d'));
+		self::assertSame('2023', $result->closed_date->format('Y'));
+		self::assertSame('02', $result->closed_date->format('m'));
+		self::assertSame('16', $result->closed_date->format('d'));
+	}
+	
+	public function testTask_Deserialize_1_0_BoolFields() : void
+	{
+		//Arrange Empty
+		$line = "1|2|20230131|20230215|abcdef||3|20230216|hijklm";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertFalse($result->is_closed);
+
+		//Arrange Invalid Format
+		$line = "1|2|20230131|20230215|abcdef|text|3|20230216|hijklm";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertFalse($result->is_closed);
+
+		//Arrange Explicit False
+		$line = "1|2|20230131|20230215|abcdef|0|3|20230216|hijklm";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertFalse($result->is_closed);
+
+		//Arrange Explicit True
+		$line = "1|2|20230131|20230215|abcdef|1|3|20230216|hijklm";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertTrue($result->is_closed);
+	}
+	
+	public function testTask_Deserialize_1_0_TextFields() : void
+	{
+		//Arrange Empty
+		$line = "1|2|20230131|20230215||1|3|20230216|";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertSame('', $result->text);
+		self::assertSame('', $result->closing_text);
+
+		//Arrange Encoded End Lines
+		$line = "1|2|20230131|20230215|a".ENCODED_END_LINE."b|text|3|20230216|c".ENCODED_END_LINE."d";
+		//Act
+		$result = Eft_Task::deserialize($line, FORMAT_1_0);
+		//Assert
+		self::assertSame("a\nb", $result->text);
+		self::assertSame("c\nd", $result->closing_text);
+	}
+	
+	////////////////////////////////////////
 }
 
 ?>
