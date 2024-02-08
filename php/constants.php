@@ -14,5 +14,6 @@ define("MESSAGE_UNAUTHORIZED", "unauthorized");
 define("FORMAT_1_0", "1.0");
 
 define("DATA_FILE_USERS", "data/users.txt");
+define("DATA_FILE_TASKS_OPEN", "data/tasks.txt");
 
 ?>

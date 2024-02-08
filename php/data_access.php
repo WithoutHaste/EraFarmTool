@@ -76,6 +76,35 @@ function eft_deserialize_users_format_1_0($file_pointer) : array {
 	return $users;
 }
 
+/**
+ * @return Eft_Task[]
+ */
+function eft_deserialize_tasks($file_pointer) : array {
+	$format_version = eft_get_data_format_version($file_pointer);
+	switch($format_version) {
+		case FORMAT_1_0: return eft_deserialize_tasks_format_1_0($file_pointer);
+		default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
+	}
+}
+
+/**
+ * read in all tasks.txt records, format 1.0
+ * assumes the file format has already been correctly determined
+ * @param $file_pointer expects an open file stream resource
+ * @return Eft_Task[]
+ */
+function eft_deserialize_tasks_format_1_0($file_pointer) : array {
+	$lines = eft_get_data_lines($file_pointer);
+	$tasks = array();
+	foreach($lines as $line) {
+		$task = Eft_Task::deserialize($line, FORMAT_1_0);
+		if($task != null) {
+			array_push($tasks, $task);
+		}
+	}
+	return $tasks;
+}
+
 // returns array of lines from the file
 // which are not comments and not the headers
 // order is maintained
@@ -197,6 +226,14 @@ function eft_persist_users($file_pointer, $format_version, $users) {
 	foreach($users as $user) {
 		fwrite($file_pointer, "\n".$user->serialize($format_version));
 	}
+}
+
+/*
+ * Assumes permissions to view tasks have already been verified
+ * @returns Eft_Task[]
+ */
+function eft_get_open_tasks() : array {
+	return eft_use_file_lock(DATA_FILE_TASKS_OPEN, 'eft_deserialize_tasks', $user);
 }
 
 ?>
