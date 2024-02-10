@@ -236,4 +236,28 @@ function eft_get_open_tasks() : array {
 	return eft_use_file_lock(DATA_FILE_TASKS_OPEN, 'eft_deserialize_tasks', $user);
 }
 
+// Assumes permissions to add a task have already been verified
+// Returns id of the task
+function eft_persist_new_task(Eft_Task $task) : int {
+	return eft_use_file_lock(DATA_FILE_TASKS_OPEN, 'eft_persist_new_task_callback', $task);
+}
+// intended to be passed as a callback to a data_access.php function
+// returns id of the task
+function eft_persist_new_task_callback($file_pointer, $new_task) : int {
+	$tasks = eft_deserialize_tasks($file_pointer);
+	$max_id = 0;
+	foreach($tasks as $task) {
+		if($user->id > $max_id) {
+			$max_id = $user->id;
+		}
+	}
+	$format_version = eft_get_data_format_version($file_pointer);
+	$new_task->id = $max_id + 1;
+	$new_task->created_date = new DateTime();
+	$new_task_serialized = $new_task->serialize($format_version);
+	fseek($file_pointer, 0, SEEK_END); //go to end of file
+	fwrite($file_pointer, "\n".$new_task_serialized);
+	return $new_task->id;
+}
+
 ?>

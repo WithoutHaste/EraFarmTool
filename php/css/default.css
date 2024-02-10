@@ -23,6 +23,10 @@ table.data td {
 	padding: 0.5em;
 }
 
+.error {
+	color: #bf190d; /*deep red*/
+}
+
 .footer {
 	font-size: 12px;
 	font-style: italic;

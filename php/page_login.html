@@ -6,11 +6,6 @@
 		<script type="text/javascript" src="js/utils.js"></script>
 		<script type="text/javascript" src="js/attribution.js"></script>
 		<link rel="stylesheet" type="text/css" href="css/default.css" />
-		<style type='text/css'>
-			.error {
-				color: #bf190d; /*deep red*/
-			}
-		</style>
     </head>
     <body>
 		<h2>Era Farm Tool</h2>
@@ -19,7 +14,7 @@
 			<tr><td>Password: </td><td><input name='password' type='password' /></td></tr>
 		</table>
 		<button onclick='submitLogin()'>Login</button>
-		<div id='container_errors'>
+		<div id='container_errors' class='error'>
 		</div>
     </body>
 </html>
@@ -30,7 +25,7 @@ function submitLogin(event) {
 	let params = [];
 	params['u'] = document.getElementsByName('username')[0].value;
 	params['p'] = document.getElementsByName('password')[0].value;
-	ajaxPost('login.php', params, loginSuccess, loginError);
+	ajaxPost('request_login.php', params, loginSuccess, loginError);
 }
 
 function loginSuccess(message) {
@@ -46,17 +41,11 @@ function loginSuccess(message) {
 function loginError(xhr) {
 	const container = document.getElementById('container_errors');
 	let element = document.createElement('div');
-	element.classList.add('error');
 	element.innerHTML = 'Error: login failed at '+formattedTimestamp()+'.';
 	container.prepend(element);
 
 	console.log('error');
 	console.log(xhr);
-}
-
-function formattedTimestamp() {
-	const now = new Date();
-	return `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
 }
 
 </script>

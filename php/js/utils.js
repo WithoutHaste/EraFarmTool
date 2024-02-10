@@ -1,3 +1,14 @@
+function createElementWithText(tag, innerText) {
+	const element = document.createElement(tag);
+	element.innerHTML = innerText;
+	return element;
+}
+
+function formattedTimestamp() {
+	const now = new Date();
+	return `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+}
+
 function ajaxGet(url, callbackSuccess, callbackError) {
 	var xhr = new XMLHttpRequest();
 	xhr.open('GET', url);
