@@ -21,6 +21,12 @@
 
 <script type='text/javascript'>
 
+window.addEventListener('load', init);
+
+function init() {
+	document.getElementsByName('username')[0].focus();
+}
+
 function submitLogin(event) {
 	let params = [];
 	params['u'] = document.getElementsByName('username')[0].value;

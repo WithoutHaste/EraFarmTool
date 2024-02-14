@@ -233,13 +233,13 @@ function eft_persist_users($file_pointer, $format_version, $users) {
  * @returns Eft_Task[]
  */
 function eft_get_open_tasks() : array {
-	return eft_use_file_lock(DATA_FILE_TASKS_OPEN, 'eft_deserialize_tasks', $user);
+	return eft_use_file_lock(DATA_FILE_TASKS, 'eft_deserialize_tasks', $user);
 }
 
 // Assumes permissions to add a task have already been verified
 // Returns id of the task
 function eft_persist_new_task(Eft_Task $task) : int {
-	return eft_use_file_lock(DATA_FILE_TASKS_OPEN, 'eft_persist_new_task_callback', $task);
+	return eft_use_file_lock(DATA_FILE_TASKS, 'eft_persist_new_task_callback', $task);
 }
 // intended to be passed as a callback to a data_access.php function
 // returns id of the task
@@ -247,8 +247,8 @@ function eft_persist_new_task_callback($file_pointer, $new_task) : int {
 	$tasks = eft_deserialize_tasks($file_pointer);
 	$max_id = 0;
 	foreach($tasks as $task) {
-		if($user->id > $max_id) {
-			$max_id = $user->id;
+		if($task->id > $max_id) {
+			$max_id = $task->id;
 		}
 	}
 	$format_version = eft_get_data_format_version($file_pointer);
@@ -258,6 +258,45 @@ function eft_persist_new_task_callback($file_pointer, $new_task) : int {
 	fseek($file_pointer, 0, SEEK_END); //go to end of file
 	fwrite($file_pointer, "\n".$new_task_serialized);
 	return $new_task->id;
+}
+
+// Assumes permissions to close a task have already been verified
+// Returns True for success
+function eft_persist_close_task($task_id, $user_id, $closing_text) : bool {
+	$params = array("id"=>$task_id, "user_id"=>$user_id, "closing_text"=>$closing_text);
+	eft_use_file_lock(DATA_FILE_TASKS, 'eft_persist_close_task_callback', $params);
+	return True;
+}
+// intended to be passed as a callback to a data_access.php function
+function eft_persist_close_task_callback($file_pointer, $params) {
+	//finding the task and updating the record are done within the same file lock
+	$tasks = eft_deserialize_tasks($file_pointer);
+	$found_task = false;
+	foreach($tasks as $task) {
+		if($task->id == $params['id']) {
+			$task->is_closed = True;
+			$task->closed_date = new DateTime();
+			$task->closed_by_user_id = $params['user_id'];
+			$task->closing_text = $params['closing_text'];
+			$found_task = true;
+			break;
+		}
+	}
+	if(!$found_task) {
+		throw new Exception(MESSAGE_EDIT_TASK_FAILED);
+	}
+	$format_version = eft_get_data_format_version($file_pointer);
+	eft_persist_tasks($file_pointer, $format_version, $tasks);
+}
+
+// Overwrites the whole file with the array of tasks
+function eft_persist_tasks($file_pointer, $format_version, $tasks) {
+	rewind($file_pointer);
+	fwrite($file_pointer, "#version:".$format_version);
+	fwrite($file_pointer, "\n".Eft_Task::serialize_headers($format_version));
+	foreach($tasks as $task) {
+		fwrite($file_pointer, "\n".$task->serialize($format_version));
+	}
 }
 
 ?>

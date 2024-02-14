@@ -15,6 +15,12 @@ top requirements
 
 
 
+known issues
+- saving a line of record does not ensure there are no end-line chars
+- html/js injection protection when displaying content to user
+- need an admin user page for adding more users
+- falling behind on dataaccess unit tests
+
 
 
 

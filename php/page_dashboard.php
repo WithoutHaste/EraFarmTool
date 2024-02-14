@@ -29,8 +29,19 @@ http_response_code(200);
 
 		<hr/>
 
-		<b>Open Tasks</b>
-		<table class='data' id='tasks-table'>
+		<table>
+			<tr>
+				<td>
+					<b>Open Tasks</b>
+					<table class='data' id='open-tasks-table'>
+					</table>
+				</td>
+				<td style='padding-left: 2em;'>
+					<b>Closed Tasks</b>
+					<table class='data' id='closed-tasks-table'>
+					</table>
+				</td>
+			</tr>
 		</table>
     </body>
 </html>
@@ -45,23 +56,50 @@ function getTasks() {
 
 function getTasksSuccess(message) {
 	const tasks = JSON.parse(message);
-	console.log(tasks);
 
-	const table = document.getElementById('tasks-table');
-	table.innerHTML = null;
+	const openTable = document.getElementById('open-tasks-table');
+	const closedTable = document.getElementById('closed-tasks-table');
+	openTable.innerHTML = null;
+	closedTable.innerHTML = null;
 	
-	const headerRow = document.createElement('tr');
-	headerRow.appendChild(createElementWithText('th', 'Days Left'));
-	headerRow.appendChild(createElementWithText('th', 'Due Date'));
-	headerRow.appendChild(createElementWithText('th', 'Text'));
-	table.appendChild(headerRow);
+	const openHeaderRow = document.createElement('tr');
+	openHeaderRow.appendChild(createElementWithText('th', 'Days Left'));
+	openHeaderRow.appendChild(createElementWithText('th', 'Due Date'));
+	openHeaderRow.appendChild(createElementWithText('th', 'Text'));
+	openHeaderRow.appendChild(createElementWithText('th', ''));
+	openTable.appendChild(openHeaderRow);
+	
+	const closedHeaderRow = document.createElement('tr');
+	closedHeaderRow.appendChild(createElementWithText('th', 'Closed Date'));
+	closedHeaderRow.appendChild(createElementWithText('th', 'Text'));
+	closedHeaderRow.appendChild(createElementWithText('th', 'Closing Text'));
+	closedTable.appendChild(closedHeaderRow);
 	
 	for(let task of tasks) {
-		const row = document.createElement('tr');
-		row.appendChild(createElementWithText('td', calcDaysLeft(new Date(task.due_date.date))));
-		row.appendChild(createElementWithText('td', formatDateForDisplay(new Date(task.due_date.date))));
-		row.appendChild(createElementWithText('td', htmlEncodeText(task.text)));
-		table.appendChild(row);
+		if(task.is_closed) {
+			const row = document.createElement('tr');
+			row.classList.add('highlight');
+			row.dataset.taskId = task.id;
+			row.appendChild(createElementWithText('td', formatDateForDisplay(new Date(task.closed_date.date))));
+			row.appendChild(createElementWithText('td', htmlEncodeText(task.text)));
+			row.appendChild(createElementWithText('td', htmlEncodeText(task.closing_text)));
+			closedTable.appendChild(row);
+		}
+		else {
+			const row = document.createElement('tr');
+			row.classList.add('highlight');
+			row.dataset.taskId = task.id;
+			row.appendChild(createElementWithText('td', calcDaysLeft(new Date(task.due_date.date))));
+			row.appendChild(createElementWithText('td', formatDateForDisplay(new Date(task.due_date.date))));
+			row.appendChild(createElementWithText('td', htmlEncodeText(task.text)));
+
+			const closeContainer = buildCloseContainer(task.id);
+			const closeCell = document.createElement('td');
+			closeCell.appendChild(closeContainer);
+			row.appendChild(closeCell);
+			
+			openTable.appendChild(row);
+		}
 	}
 	
 	function calcDaysLeft(date) {
@@ -75,6 +113,51 @@ function getTasksSuccess(message) {
 	function htmlEncodeText(text) {
 		//TODO script injection protection, html injection protection
 		return text.replace('\n', '<br/>');
+	}
+	
+	function buildCloseContainer(taskId) {
+		const container = document.createElement('span');
+		container.dataset.taskId = taskId;
+		const button = createElementWithText('button', 'Close');
+		button.addEventListener('click', clickCloseButton);
+		container.appendChild(button);
+		return container;
+	}
+	
+	function clickCloseButton(event) {
+		const container = event.target.parentElement;
+		if(container.tagName != 'SPAN') {
+			console.log("Error: cannot find close container");
+			return;
+		}
+		const taskId = container.dataset.taskId;
+		
+		container.innerHTML = '';
+		const label = createElementWithText('span', 'Closing Text');
+		container.appendChild(label);
+		container.appendChild(document.createElement('br'));
+		const textArea = document.createElement('textarea');
+		textArea.cols = '30';
+		textArea.rows = '3';
+		textArea.maxlength = '100';
+		container.appendChild(textArea);
+		textArea.focus();
+		container.appendChild(document.createElement('br'));
+		const button = createElementWithText('button', 'Confirm Close');
+		button.dataset.taskId = taskId;
+		button.addEventListener('click', clickConfirmCloseButton);
+		container.appendChild(button);
+		
+		function clickConfirmCloseButton(event) {
+			const button = event.target;
+			const textArea = button.parentElement.getElementsByTagName('textarea')[0];
+			const taskId = button.dataset.taskId;
+
+			let params = [];
+			params['taskId'] = taskId;
+			params['closingText'] = textArea.value;
+			ajaxPost('request_close_task.php', params, closeTaskSuccess, handleError);
+		}
 	}
 }
 
@@ -95,13 +178,15 @@ function addTask() {
 }
 
 function addTaskSuccess(message) {
-	console.log(message);
-
 	getDaysInput().value = '';
 	getTextInput().value = '';
 
 	getDaysInput().focus();
 	
+	getTasks();
+}
+
+function closeTaskSuccess(message) {
 	getTasks();
 }
 

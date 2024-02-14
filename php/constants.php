@@ -9,11 +9,12 @@ define("MESSAGE_FILE_CANNOT_BE_OPENED", "file cannot be opened");
 define("MESSAGE_UNKNOWN_DATA_FORMAT", "unknown data format");
 define("MESSAGE_EDIT_RECORD_LOCK_FAILED", "failed to lock file, record was not edited");
 define("MESSAGE_EDIT_USER_FAILED", "failed to edit a user record");
+define("MESSAGE_EDIT_TASK_FAILED", "failed to edit a task record");
 define("MESSAGE_UNAUTHORIZED", "unauthorized");
 
 define("FORMAT_1_0", "1.0");
 
 define("DATA_FILE_USERS", "data/users.txt");
-define("DATA_FILE_TASKS_OPEN", "data/tasks.txt");
+define("DATA_FILE_TASKS", "data/tasks.txt");
 
 ?>
