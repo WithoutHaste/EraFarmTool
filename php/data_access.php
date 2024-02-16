@@ -260,6 +260,33 @@ function eft_persist_new_task_callback($file_pointer, $new_task) : int {
 	return $new_task->id;
 }
 
+// Assumes permissions to edit a task have already been verified
+// Returns True for success
+function eft_persist_edit_task($task_id, $user_id, $due_date, $text) : bool {
+	$params = array("id"=>$task_id, "user_id"=>$user_id, "due_date"=>$due_date, "text"=>$text);
+	eft_use_file_lock(DATA_FILE_TASKS, 'eft_persist_edit_task_callback', $params);
+	return True;
+}
+// intended to be passed as a callback to a data_access.php function
+function eft_persist_edit_task_callback($file_pointer, $params) {
+	//finding the task and updating the record are done within the same file lock
+	$tasks = eft_deserialize_tasks($file_pointer);
+	$found_task = false;
+	foreach($tasks as $task) {
+		if($task->id == $params['id']) {
+			$task->due_date = $params['due_date'];
+			$task->text = $params['text'];
+			$found_task = true;
+			break;
+		}
+	}
+	if(!$found_task) {
+		throw new Exception(MESSAGE_EDIT_TASK_FAILED);
+	}
+	$format_version = eft_get_data_format_version($file_pointer);
+	eft_persist_tasks($file_pointer, $format_version, $tasks);
+}
+
 // Assumes permissions to close a task have already been verified
 // Returns True for success
 function eft_persist_close_task($task_id, $user_id, $closing_text) : bool {
