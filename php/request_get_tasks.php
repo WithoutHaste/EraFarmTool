@@ -10,7 +10,7 @@ if(isset($_COOKIE["id"])) {
 	}
 }
 
-$tasks = eft_get_open_tasks();
+$tasks = eft_get_tasks();
 usort($tasks, 'sort_tasks_by_due_date');
 
 // sort by due date, ascending

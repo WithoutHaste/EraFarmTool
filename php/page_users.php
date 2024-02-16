@@ -1,6 +1,20 @@
 <?php
 
 include_once("data_access.php");
+include_once("security.php");
+
+if(isset($_COOKIE["id"])) {
+	$is_authorized = eft_verify_auth_key($_COOKIE["id"], $_COOKIE["auth_key"]);
+	if(!$is_authorized) {
+		include('page_401_unauthorized.php');
+		die();
+	}
+	$user = eft_get_user_by_id($_COOKIE["id"]);
+	if(!$user->is_admin) {
+		include('page_401_unauthorized.php');
+		die();
+	}
+}
 
 http_response_code(200);
 
@@ -10,7 +24,7 @@ http_response_code(200);
 <html lang="en">
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8">
-        <title>Dashboard - Era Farm Tool</title>
+        <title>Users - Era Farm Tool</title>
 		<script type="text/javascript" src="js/utils.js"></script>
 		<script type="text/javascript" src="js/attribution.js"></script>
 		<link rel="stylesheet" type="text/css" href="css/default.css" />
@@ -21,10 +35,13 @@ http_response_code(200);
 		<?php include_once("page_navigation_bar.php"); ?>
 
 		<table>
-			<tr><td>New Task</td></tr>
-			<tr><td>Days Left: </td><td><input name='days' type='number' /></td></tr>
-			<tr><td>Text: </td><td><textarea name='text' cols='50' rows='5' maxlength='500'></textarea></td></tr>
-			<tr><td></td><td style='text-align:right;'><button onclick='addTask()'>Add</button></td></tr>
+			<tr><td>New User</td></tr>
+			<tr><td>Username: </td><td><input name='username' /></td></tr>
+			<tr><td>Password: </td><td><input name='password' /></td></tr>
+			<tr><td>Is Admin:</td><td>No: <input type='radio' name='isAdmin' value='0' /> Yes: <input type='radio' name='isAdmin' value='1' /></td></tr>
+			<tr><td>Email: </td><td><input name='email' /></td></tr>
+			<tr><td>Phone Number: </td><td><input name='phoneNumber' /></td></tr>
+			<tr><td></td><td style='text-align:right;'><button onclick='addUser()'>Add</button></td></tr>
 		</table>
 		<div id='container_errors' class='error'>
 		</div>
@@ -34,13 +51,8 @@ http_response_code(200);
 		<table>
 			<tr>
 				<td>
-					<b>Open Tasks</b>
-					<table class='data' id='open-tasks-table'>
-					</table>
-				</td>
-				<td style='padding-left: 2em;'>
-					<b>Closed Tasks</b>
-					<table class='data' id='closed-tasks-table'>
+					<b>Users</b>
+					<table class='data' id='users-table'>
 					</table>
 				</td>
 			</tr>
@@ -50,80 +62,57 @@ http_response_code(200);
 
 <script type='text/javascript'>
 
-window.addEventListener('load', getTasks);
+window.addEventListener('load', getUsers);
 
-function getTasks() {
-	ajaxGet('request_get_tasks.php', getTasksSuccess, handleError);
+function getUsers() {
+	ajaxGet('request_get_users.php', getUsersSuccess, handleError);
 }
 
-function getTasksSuccess(message) {
-	const tasks = JSON.parse(message);
+function getUsersSuccess(message) {
+	const users = JSON.parse(message);
 
-	const openTable = document.getElementById('open-tasks-table');
-	const closedTable = document.getElementById('closed-tasks-table');
-	openTable.innerHTML = null;
-	closedTable.innerHTML = null;
+	const table = document.getElementById('users-table');
+	table.innerHTML = null;
 	
-	const openHeaderRow = document.createElement('tr');
-	openHeaderRow.appendChild(createElementWithText('th', 'Days Left'));
-	openHeaderRow.appendChild(createElementWithText('th', 'Due Date'));
-	openHeaderRow.appendChild(createElementWithText('th', 'Text'));
-	openHeaderRow.appendChild(createElementWithText('th', ''));
-	openHeaderRow.appendChild(createElementWithText('th', ''));
-	openTable.appendChild(openHeaderRow);
+	const headerRow = document.createElement('tr');
+	headerRow.appendChild(createElementWithText('th', 'Username'));
+	headerRow.appendChild(createElementWithText('th', 'Is Admin'));
+	headerRow.appendChild(createElementWithText('th', 'Email'));
+	headerRow.appendChild(createElementWithText('th', 'Phone Number'));
+	headerRow.appendChild(createElementWithText('th', ''));
+	headerRow.appendChild(createElementWithText('th', ''));
+	table.appendChild(headerRow);
+
+	for(let user of users) {
+		const row = document.createElement('tr');
+		row.classList.add('highlight');
+		row.dataset.userId = user.id;
+		row.appendChild(createElementWithText('td', user.username));
+		row.appendChild(createElementWithText('td', convertBoolToCheckmark(user.is_admin)));
+		row.appendChild(createElementWithText('td', user.email));
+		row.appendChild(createElementWithText('td', user.phone_number));
+
+/*		const editContainer = buildEditContainer(task);
+		const editCell = document.createElement('td');
+		editCell.appendChild(editContainer);
+		row.appendChild(editCell);
+
+		const closeContainer = buildCloseContainer(task.id);
+		const closeCell = document.createElement('td');
+		closeCell.appendChild(closeContainer);
+		row.appendChild(closeCell);
+*/		
+		table.appendChild(row);
+	}
 	
-	const closedHeaderRow = document.createElement('tr');
-	closedHeaderRow.appendChild(createElementWithText('th', 'Closed Date'));
-	closedHeaderRow.appendChild(createElementWithText('th', 'Text'));
-	closedHeaderRow.appendChild(createElementWithText('th', 'Closing Text'));
-	closedTable.appendChild(closedHeaderRow);
-	
-	for(let task of tasks) {
-		if(task.is_closed) {
-			const row = document.createElement('tr');
-			row.classList.add('highlight');
-			row.dataset.taskId = task.id;
-			row.appendChild(createElementWithText('td', formatDateForDisplay(new Date(task.closed_date.date))));
-			row.appendChild(createElementWithText('td', htmlEncodeText(task.text)));
-			row.appendChild(createElementWithText('td', htmlEncodeText(task.closing_text)));
-			closedTable.appendChild(row);
+	function convertBoolToCheckmark(value) {
+		if(value) {
+			return '✓';
 		}
-		else {
-			const row = document.createElement('tr');
-			row.classList.add('highlight');
-			row.dataset.taskId = task.id;
-			row.appendChild(createElementWithText('td', calcDaysLeft(new Date(task.due_date.date))));
-			row.appendChild(createElementWithText('td', formatDateForDisplay(new Date(task.due_date.date))));
-			row.appendChild(createElementWithText('td', htmlEncodeText(task.text)));
-
-			const editContainer = buildEditContainer(task);
-			const editCell = document.createElement('td');
-			editCell.appendChild(editContainer);
-			row.appendChild(editCell);
-
-			const closeContainer = buildCloseContainer(task.id);
-			const closeCell = document.createElement('td');
-			closeCell.appendChild(closeContainer);
-			row.appendChild(closeCell);
-			
-			openTable.appendChild(row);
-		}
+		return '';
 	}
 	
-	function calcDaysLeft(date) {
-		return parseInt((date - new Date()) / (1000 * 60 * 60 * 24)) + 1;
-	}
-	
-	function formatDateForDisplay(date) {
-		return `${date.getYear()+1900}-${date.getMonth()+1}-${date.getDate()}`;
-	}
-	
-	function htmlEncodeText(text) {
-		//TODO script injection protection, html injection protection
-		return text.replace('\n', '<br/>');
-	}
-	
-	function buildEditContainer(task) {
+/*	function buildEditContainer(task) {
 		const container = document.createElement('span');
 		container.dataset.taskId = task.id;
 		container.dataset.daysLeft = calcDaysLeft(new Date(task.due_date.date));
@@ -225,49 +214,56 @@ function getTasksSuccess(message) {
 			params['closingText'] = textArea.value;
 			ajaxPost('request_close_task.php', params, closeTaskSuccess, handleError);
 		}
-	}
+	}*/
 }
 
-function addTask() {
+function addUser() {
 	let params = [];
-	params['date'] = convertDaysToFormattedDate(getDaysInput().value);
-	params['text'] = getTextInput().value;
-	ajaxPost('request_add_task.php', params, addTaskSuccess, handleError);
+	params['username'] = getUsernameInput().value;
+	params['password'] = getPasswordInput().value;
+	params['is_admin'] = getIsAdminInput().value;
+	params['email'] = getEmailInput().value;
+	params['phone_number'] = getPhoneNumberInput().value;
+	ajaxPost('request_add_user.php', params, addUserSuccess, handleError);
+}
+
+function addUserSuccess(message) {
+	getUsernameInput().value = '';
+	getPasswordInput().value = '';
+	getEmailInput().value = '';
+	getPhoneNumberInput().value = '';
+
+	getUsernameInput().focus();
 	
+	getUsers();
 }
 
-//convert Days to YYYYmmdd DueDate
-function convertDaysToFormattedDate(daysLeft) {
-	let days = parseInt(daysLeft);
-	let now = new Date();
-	let dueDate = new Date();
-	dueDate.setDate(now.getDate() + days);
-	return `${dueDate.getYear()+1900}${(dueDate.getMonth()+1).toString().padStart(2,'0')}${dueDate.getDate().toString().padStart(2,'0')}`;
+function editUserSuccess(message) {
+	getUsers();
 }
 
-function addTaskSuccess(message) {
-	getDaysInput().value = '';
-	getTextInput().value = '';
-
-	getDaysInput().focus();
-	
+/*function closeTaskSuccess(message) {
 	getTasks();
+}*/
+
+function getUsernameInput() {
+	return document.getElementsByName('username')[0];
 }
 
-function editTaskSuccess(message) {
-	getTasks();
+function getPasswordInput() {
+	return document.getElementsByName('password')[0];
 }
 
-function closeTaskSuccess(message) {
-	getTasks();
+function getIsAdminInput() {
+	return document.getElementsByName('isAdmin')[0];
 }
 
-function getDaysInput() {
-	return document.getElementsByName('days')[0];
+function getEmailInput() {
+	return document.getElementsByName('email')[0];
 }
 
-function getTextInput() {
-	return document.getElementsByName('text')[0];
+function getPhoneNumberInput() {
+	return document.getElementsByName('phoneNumber')[0];
 }
 
 function handleError(xhr) {

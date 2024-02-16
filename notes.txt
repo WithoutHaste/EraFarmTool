@@ -16,6 +16,7 @@ top requirements
 
 
 known issues
+- clean up how the pages are composed - which require simple auth, which require admin auth
 - saving a line of record does not ensure there are no end-line chars
 - html/js injection protection when displaying content to user
 - need an admin user page for adding more users

@@ -33,6 +33,24 @@ class Eft_Record {
 	}
 }
 
+class Eft_User_Display {
+	public $id;
+	public $is_admin = false;
+	public $username;
+	public $email;
+	public $phone_number;
+	
+	public static function from_user(Eft_User $user) : Eft_User_Display {
+		$result = new Eft_User_Display();
+		$result->id = $user->id;
+		$result->is_admin = $user->is_admin;
+		$result->username = $user->username;
+		$result->email = $user->email;
+		$result->phone_number = $user->phone_number;
+		return $result;
+	}
+}
+
 class Eft_User extends Eft_Record {
 	public $id;
 	public $created_date;

@@ -127,6 +127,14 @@ function eft_get_data_lines($file_pointer) {
 	return $lines;
 }
 
+/*
+ * Assumes permissions to view users have already been verified
+ * @returns Eft_User[]
+ */
+function eft_get_users() : array {
+	return eft_use_file_lock(DATA_FILE_USERS, 'eft_deserialize_users', null);
+}
+
 // Assumes permissions to add a user have already been verified
 // Returns id of the user
 function eft_persist_new_user(Eft_User $user) : int {
@@ -232,8 +240,8 @@ function eft_persist_users($file_pointer, $format_version, $users) {
  * Assumes permissions to view tasks have already been verified
  * @returns Eft_Task[]
  */
-function eft_get_open_tasks() : array {
-	return eft_use_file_lock(DATA_FILE_TASKS, 'eft_deserialize_tasks', $user);
+function eft_get_tasks() : array {
+	return eft_use_file_lock(DATA_FILE_TASKS, 'eft_deserialize_tasks', null);
 }
 
 // Assumes permissions to add a task have already been verified
