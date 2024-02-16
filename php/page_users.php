@@ -37,7 +37,8 @@ http_response_code(200);
 		<table>
 			<tr><td>New User</td></tr>
 			<tr><td>Username: </td><td><input name='username' /></td></tr>
-			<tr><td>Password: </td><td><input name='password' /></td></tr>
+			<tr><td>Password: </td><td><input name='password' type='password' /></td></tr>
+			<tr><td>Password Again: </td><td><input name='passwordAgain' type='password' /></td></tr>
 			<tr><td>Is Admin:</td><td>No: <input type='radio' name='isAdmin' value='0' /> Yes: <input type='radio' name='isAdmin' value='1' /></td></tr>
 			<tr><td>Email: </td><td><input name='email' /></td></tr>
 			<tr><td>Phone Number: </td><td><input name='phoneNumber' /></td></tr>
@@ -218,18 +219,25 @@ function getUsersSuccess(message) {
 }
 
 function addUser() {
+	if(getPasswordInput().value != getPasswordAgainInput().value) {
+		displayError('passwords do not match');
+		return;
+	}
+	
 	let params = [];
 	params['username'] = getUsernameInput().value;
 	params['password'] = getPasswordInput().value;
-	params['is_admin'] = getIsAdminInput().value;
+	params['is_admin'] = getIsAdminValue();
 	params['email'] = getEmailInput().value;
 	params['phone_number'] = getPhoneNumberInput().value;
+
 	ajaxPost('request_add_user.php', params, addUserSuccess, handleError);
 }
 
 function addUserSuccess(message) {
 	getUsernameInput().value = '';
 	getPasswordInput().value = '';
+	getPasswordAgainInput().value = '';
 	getEmailInput().value = '';
 	getPhoneNumberInput().value = '';
 
@@ -254,8 +262,12 @@ function getPasswordInput() {
 	return document.getElementsByName('password')[0];
 }
 
-function getIsAdminInput() {
-	return document.getElementsByName('isAdmin')[0];
+function getPasswordAgainInput() {
+	return document.getElementsByName('passwordAgain')[0];
+}
+
+function getIsAdminValue() {
+	return document.querySelector('input[name="isAdmin"]:checked').value;
 }
 
 function getEmailInput() {
@@ -267,13 +279,17 @@ function getPhoneNumberInput() {
 }
 
 function handleError(xhr) {
-	const container = document.getElementById('container_errors');
-	let element = document.createElement('div');
-	element.innerHTML = 'Error: operation failed at '+formattedTimestamp()+'.';
-	container.prepend(element);
+	displayError('operation failed at '+formattedTimestamp()+'.');
 
 	console.log('error');
 	console.log(xhr);
+}
+
+function displayError(message) {
+	const container = document.getElementById('container_errors');
+	let element = document.createElement('div');
+	element.innerHTML = 'Error: ' + message;
+	container.prepend(element);
 }
 
 

@@ -21,6 +21,7 @@ known issues
 - html/js injection protection when displaying content to user
 - need an admin user page for adding more users
 - falling behind on dataaccess unit tests
+- put all "new user validation" in one path
 
 
 
