@@ -11,4 +11,5 @@ $user = eft_get_user_by_id($user_id);
 
 <a href='index.php'>Tasks</a>&nbsp;&nbsp;&nbsp;&nbsp;
 <?php if($user->is_admin) { ?> <a href='page_users.php'>Users</a>&nbsp;&nbsp;&nbsp;&nbsp; <?php } ?>
+<a href='page_your_account.php'>Your Account</a>&nbsp;&nbsp;&nbsp;&nbsp;
 <hr/>

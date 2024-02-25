@@ -226,6 +226,34 @@ function eft_update_user_with_login_session_callback($file_pointer, $params) {
 	eft_persist_users($file_pointer, $format_version, $users);
 }
 
+// Returns nothing
+function eft_update_user_with_password($id, $password_hashed) {
+	$params = array("id"=>$id, "password_hashed"=>$password_hashed);
+	return eft_use_file_lock(DATA_FILE_USERS, 'eft_update_user_with_password_callback', $params);
+}
+// intended to be passed as a callback to a data_access.php function
+// Returns nothing
+function eft_update_user_with_password_callback($file_pointer, $params) {
+	$id = $params["id"];
+	$password_hashed = $params["password_hashed"];
+	
+	//finding the user and updating the record are done within the same file lock
+	$users = eft_deserialize_users($file_pointer);
+	$found_user = false;
+	foreach($users as $user) {
+		if($user->id == $id) {
+			$user->password_hashed = $password_hashed;
+			$found_user = true;
+			break;
+		}
+	}
+	if(!$found_user) {
+		throw new Exception(MESSAGE_EDIT_USER_FAILED);
+	}
+	$format_version = eft_get_data_format_version($file_pointer);
+	eft_persist_users($file_pointer, $format_version, $users);
+}
+
 // Overwrites the whole file with the array of users
 function eft_persist_users($file_pointer, $format_version, $users) {
 	rewind($file_pointer);

@@ -30,6 +30,9 @@ tr.highlight:hover td {
 .error {
 	color: #bf190d; /*deep red*/
 }
+.success {
+	color: #0dbf42; /*deep green*/
+}
 
 .footer {
 	font-size: 12px;
