@@ -76,35 +76,6 @@ function eft_deserialize_users_format_1_0($file_pointer) : array {
 	return $users;
 }
 
-/**
- * @return Eft_Task[]
- */
-function eft_deserialize_tasks($file_pointer) : array {
-	$format_version = eft_get_data_format_version($file_pointer);
-	switch($format_version) {
-		case FORMAT_1_0: return eft_deserialize_tasks_format_1_0($file_pointer);
-		default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
-	}
-}
-
-/**
- * read in all tasks.txt records, format 1.0
- * assumes the file format has already been correctly determined
- * @param $file_pointer expects an open file stream resource
- * @return Eft_Task[]
- */
-function eft_deserialize_tasks_format_1_0($file_pointer) : array {
-	$lines = eft_get_data_lines($file_pointer);
-	$tasks = array();
-	foreach($lines as $line) {
-		$task = Eft_Task::deserialize($line, FORMAT_1_0);
-		if($task != null) {
-			array_push($tasks, $task);
-		}
-	}
-	return $tasks;
-}
-
 // returns array of lines from the file
 // which are not comments and not the headers
 // order is maintained
@@ -264,6 +235,37 @@ function eft_persist_users($file_pointer, $format_version, $users) {
 	}
 }
 
+///////////////////////////////////////
+
+/**
+ * @return Eft_Task[]
+ */
+function eft_deserialize_tasks($file_pointer) : array {
+	$format_version = eft_get_data_format_version($file_pointer);
+	switch($format_version) {
+		case FORMAT_1_0: return eft_deserialize_tasks_format_1_0($file_pointer);
+		default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
+	}
+}
+
+/**
+ * read in all tasks.txt records, format 1.0
+ * assumes the file format has already been correctly determined
+ * @param $file_pointer expects an open file stream resource
+ * @return Eft_Task[]
+ */
+function eft_deserialize_tasks_format_1_0($file_pointer) : array {
+	$lines = eft_get_data_lines($file_pointer);
+	$tasks = array();
+	foreach($lines as $line) {
+		$task = Eft_Task::deserialize($line, FORMAT_1_0);
+		if($task != null) {
+			array_push($tasks, $task);
+		}
+	}
+	return $tasks;
+}
+
 /*
  * Assumes permissions to view tasks have already been verified
  * @returns Eft_Task[]
@@ -359,6 +361,108 @@ function eft_persist_tasks($file_pointer, $format_version, $tasks) {
 	fwrite($file_pointer, "\n".Eft_Task::serialize_headers($format_version));
 	foreach($tasks as $task) {
 		fwrite($file_pointer, "\n".$task->serialize($format_version));
+	}
+}
+
+
+///////////////////////////////////////
+
+/**
+ * @return Eft_Plant[]
+ */
+function eft_deserialize_plants($file_pointer) : array {
+	$format_version = eft_get_data_format_version($file_pointer);
+	switch($format_version) {
+		case FORMAT_1_0: return eft_deserialize_plants_format_1_0($file_pointer);
+		default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
+	}
+}
+
+/**
+ * read in all plants.txt records, format 1.0
+ * assumes the file format has already been correctly determined
+ * @param $file_pointer expects an open file stream resource
+ * @return Eft_Plant[]
+ */
+function eft_deserialize_Plants_format_1_0($file_pointer) : array {
+	$lines = eft_get_data_lines($file_pointer);
+	$plants = array();
+	foreach($lines as $line) {
+		$plant = Eft_Plant::deserialize($line, FORMAT_1_0);
+		if($plant != null) {
+			array_push($plants, $plant);
+		}
+	}
+	return $plants;
+}
+
+/*
+ * Assumes permissions to view tasks have already been verified
+ * @returns Eft_Plant[]
+ */
+function eft_get_plants() : array {
+	return eft_use_file_lock(DATA_FILE_PLANTS, 'eft_deserialize_plants', null);
+}
+
+// Assumes permissions to add a plant have already been verified
+// Returns id of the plant
+function eft_persist_new_plant(Eft_Plant $plant) : int {
+	return eft_use_file_lock(DATA_FILE_PLANTS, 'eft_persist_new_plant_callback', $plant);
+}
+// intended to be passed as a callback to a data_access.php function
+// returns id of the plant
+function eft_persist_new_plant_callback($file_pointer, $new_plant) : int {
+	$plants = eft_deserialize_plants($file_pointer);
+	$max_id = 0;
+	foreach($plants as $plant) {
+		if($plant->id > $max_id) {
+			$max_id = $plant->id;
+		}
+	}
+	$format_version = eft_get_data_format_version($file_pointer);
+	$new_plant->id = $max_id + 1;
+	$new_plant_serialized = $new_plant->serialize($format_version);
+	fseek($file_pointer, 0, SEEK_END); //go to end of file
+	fwrite($file_pointer, "\n".$new_plant_serialized);
+	return $new_plant->id;
+}
+
+// Assumes permissions to edit a plant have already been verified
+// Returns True for success
+function eft_persist_edit_plant(Eft_Plant $plant) : bool {
+	$params = array("plant"=>$plant);
+	eft_use_file_lock(DATA_FILE_PLANTS, 'eft_persist_edit_plant_callback', $params);
+	return True;
+}
+// intended to be passed as a callback to a data_access.php function
+function eft_persist_edit_plant_callback($file_pointer, $params) {
+	//finding the task and updating the record are done within the same file lock
+	$plants = eft_deserialize_plants($file_pointer);
+	$edited_plant = $params['plant'];
+	$found_plant = false;
+	foreach($plants as $plant) {
+		if($plant->id == $edited_plant->id) {
+			$plant->name = $edited_plant->name;
+			$plant->categories = $edited_plant->categories;
+			$plant->notes = $edited_plant->notes;
+			$found_plant = true;
+			break;
+		}
+	}
+	if(!$found_plant) {
+		throw new Exception(MESSAGE_EDIT_PLANT_FAILED);
+	}
+	$format_version = eft_get_data_format_version($file_pointer);
+	eft_persist_plants($file_pointer, $format_version, $plants);
+}
+
+// Overwrites the whole file with the array of plants
+function eft_persist_plants($file_pointer, $format_version, $plants) {
+	rewind($file_pointer);
+	fwrite($file_pointer, "#version:".$format_version);
+	fwrite($file_pointer, "\n".Eft_Plant::serialize_headers($format_version));
+	foreach($plants as $plant) {
+		fwrite($file_pointer, "\n".$plant->serialize($format_version));
 	}
 }
 

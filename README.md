@@ -59,6 +59,7 @@ Format of files in `data` folder:
 - files are pipe (|) delimited
   - using pipes instead of commas due to how often commas are used in regular inputs
   - pipes are stripped from all input fields
+  - there is no way to "escape" the pipes
 - date format is `YYYYMMDD`
 - booleans are `0` or `1`
 - text fields are stored with end-line characters encoded as `%0A` (the html encoding)
@@ -70,6 +71,9 @@ Versions of each data file:
 	- Id|CreatedDate|IsAdmin|Username|PasswordHashed|Email|PhoneNumber|LastLoginDate|SessionKey|IsDeactivated
 - **tasks.txt** version 1.0
 	- Id|CreatedByUserId|CreatedDate|DueDate|Text|IsClosed|ClosedByUserId|ClosedDate|ClosingText
+- **plants.txt** version 1.0
+	- Id|Name|Categories|Notes
+	- "Categories" is a comma delimited list of terms
 
 ## Run unit tests
 

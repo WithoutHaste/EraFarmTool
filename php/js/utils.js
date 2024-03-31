@@ -8,6 +8,11 @@ function formattedTimestamp() {
 	const now = new Date();
 	return `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
 }
+	
+function htmlEncodeText(text) {
+	//TODO script injection protection, html injection protection
+	return text.replace('\n', '<br/>');
+}
 
 function ajaxGet(url, callbackSuccess, callbackError) {
 	var xhr = new XMLHttpRequest();

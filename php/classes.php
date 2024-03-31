@@ -208,4 +208,77 @@ class Eft_Task extends Eft_Record {
 	}
 }
 
+class Eft_Plant extends Eft_Record {
+	public $id;
+	public $name;
+	public $categories;
+	public $notes;
+
+	// returns string from serializing this headers
+	// end-line character is not included
+	public static function serialize_headers(?string $format) : string {
+		switch($format) {
+			case FORMAT_1_0: return Eft_Plant::serialize_headers_1_0();
+			default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
+		}
+	}
+	
+	// returns string from serializing this data format version 1.0 headers
+	// end-line character is not included
+	private function serialize_headers_1_0() : string {
+		return "Id|Name|Categories|Notes";
+	}
+
+	// returns string from serializing this record
+	// end-line character is not included
+	public function serialize(?string $format) : string {
+		switch($format) {
+			case FORMAT_1_0: return $this->serialize_1_0();
+			default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
+		}
+	}
+	
+	// returns string from serializing this data format version 1.0 record
+	// end-line character is not included
+	// text fields have end-line characters stored as html encoding "%0A"
+	private function serialize_1_0() : string {
+		if($this->name != null) {
+			$this->name = str_replace('|', '-', $this->name);
+			$this->name = str_replace("\n", ", ", $this->name);
+		}
+		if($this->categories != null) {
+			$this->categories = str_replace('|', '-', $this->categories);
+			$this->categories = str_replace("\n", ", ", $this->categories);
+		}
+		if($this->notes != null) {
+			$this->notes = str_replace('|', '-', $this->notes);
+			$this->notes = str_replace("\n", ENCODED_END_LINE, $this->notes);
+		}
+		
+		return "{$this->id}|{$this->name}|{$this->categories}|{$this->notes}";
+	}
+	
+	// returns object from deserializing a record
+	public static function deserialize(?string $line, ?string $format) : ?Eft_Plant {
+		switch($format) {
+			case FORMAT_1_0: return Eft_Plant::deserialize_1_0($line);
+			default: throw new Exception(MESSAGE_UNKNOWN_DATA_FORMAT);
+		}
+	}
+	
+	// returns object from deserializing a data format version 1.0 record
+	private static function deserialize_1_0(?string $line) : ?Eft_Plant {
+		if(is_null($line)) {
+			return null;
+		}
+		$columns = explode('|', $line);
+		$plant = new Eft_Plant();
+		$plant->id = intval(eft_get_element($columns, 0));
+		$plant->name = eft_get_element($columns, 1);
+		$plant->categories = eft_get_element($columns, 2);
+		$plant->notes = str_replace(ENCODED_END_LINE, "\n", eft_get_element($columns, 3));
+		return $plant;
+	}
+}
+
 ?>
